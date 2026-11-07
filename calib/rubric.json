@@ -1,0 +1,36 @@
+{
+  "version": "plateedit-rating-v1",
+  "purpose": "Post-hoc blinded rating of SAM-guided (M1) test outputs. Not part of the frozen V10 run; it does not change any frozen setting or selection.",
+  "task_goals": {
+    "T1-B": "ADD a few cooked broccoli florets on top of the existing rice/noodles. The original staple must remain visible and recognisable. Everything else (other food, plate, table, background, lighting, viewpoint) must be unchanged.",
+    "T2": "REPLACE the white rice with cooked whole-grain brown rice. No white rice should remain, and it should look like real brown rice (darker, visible bran-coloured grains), not just tinted or seasoned white rice. Everything else must be unchanged."
+  },
+  "per_output": {
+    "edit": {
+      "question": "Was the requested edit done?",
+      "scale": {"0": "Not done: no visible requested change, or a different change.", "1": "Partly done: change visible but incomplete or ambiguous (e.g. a single tiny floret; rice only tinted or patchy; staple largely lost in T1).", "2": "Clearly done: the requested change is obvious and complete for the task goal."}
+    },
+    "preserve": {
+      "question": "Is the rest of the meal (everything except the edited staple) preserved?",
+      "scale": {"0": "Major change: other food, plate or scene redrawn, moved or removed.", "1": "Minor change: small but noticeable differences outside the staple (e.g. a side item altered, seam or colour shift at the boundary).", "2": "Preserved: no noticeable change outside the staple."}
+    },
+    "realism": {
+      "question": "How realistic is the image as a food photograph?",
+      "scale": {"1": "Clearly fake or broken.", "2": "Obvious artefacts.", "3": "Plausible with some artefacts.", "4": "Realistic with minor flaws.", "5": "Indistinguishable from a real photo."}
+    },
+    "extra": {
+      "question": "Does the output add anything that was NOT requested (e.g. garnish, extra food, utensils, text)?",
+      "scale": {"0": "No", "1": "Yes"}
+    }
+  },
+  "preference": {
+    "question": "Overall, which output better fulfils the task goal while keeping the rest of the meal unchanged?",
+    "options": ["A", "B", "tie"]
+  },
+  "rules": [
+    "Judge only what is visible. Grey bars at the image edges are padding and should be ignored.",
+    "Rate each output independently first, then give the overall preference.",
+    "Do not guess which model made which output; order is randomised.",
+    "Treat a missing staple in T1 as a failure of the edit (score 0 or 1), because the task asks to keep it."
+  ]
+}

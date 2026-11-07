@@ -1,0 +1,126 @@
+% CE7454 Project 2 (FY2026): "4-page report in CVPR format" (official author kit). Following the CVPR convention,
+% the 4-page limit applies to the main text and figures; references follow on page 5. Confirm with the TA.
+% Blueprint and page budget: report/README.md. Grey boxes = planned figures; \tbd = numbers from locked test runs.
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[pagenumbers]{cvpr}
+\input{preamble}
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+\def\paperID{}
+\def\confName{CVPR}
+\def\confYear{2026}
+\newcommand{\draftnote}[1]{{\color{blue}\small\textbf{Draft:} #1}}
+\newcommand{\tbd}{\textcolor{red}{\textbf{xx}}}
+\newcommand{\figbox}[2]{\fbox{\parbox[c][#1][c]{0.96\linewidth}{\centering\small\color{gray}#2}}}
+\title{SgFood-Edit: Check, Then Retry --- Reliable Fine-Grained Edits of\\Hawker Meals with a Vision-Language Checker in the Loop}
+\author{CE7454 Project 2 Group\\
+Nanyang Technological University\\
+\textit{Author names and student IDs to be confirmed}}
+\begin{document}
+\maketitle
+
+% ---------------------------------------------------------------- page 1 (abstract ~150 words, intro ~0.9 col)
+\begin{abstract}
+Off-the-shelf diffusion editors are unreliable for fine-grained, local edits: a single attempt often fails, and text--image similarity scores do not reveal when. We study whether a vision-language model (VLM) checker in the loop---selecting among outputs and retrying failed ones with an action chosen by the failure---makes such edits reliable without retraining. Our test case is previewing healthier swaps in photographs of Singaporean hawker meals: white rice to brown rice, and broccoli added on the staple. At matched budgets of $K$ generations we compare single-shot editing, best-of-$K$ selection by CLIP or by the checker, and check-and-retry, under the original and a corrected prompt, against a non-generative colour-transfer baseline. On \tbd{} new test photos, judged blind by an independent VLM and annotated by the authors, \tbd{}. Correcting two prompt failure modes---negations and silent truncation in CLIP's text encoder---accounts for \tbd{} of the gain and the loop for \tbd{}; selecting with an imperfect checker inflates its own success estimate by \tbd{} points.
+\end{abstract}
+
+\begin{figure}[t]
+\centering
+\figbox{4.1cm}{Fig.~1 (teaser): two test photos (brown rice, broccoli). Columns: original $|$ original prompt, single-shot (grey rice, checker fail) $|$ corrected prompt + check-and-retry (pass). Checker verdicts printed on each image.}
+\caption{Single attempts at fine-grained food edits fail in ways a VLM checker can detect; retrying on the diagnosed failure fixes them. \draftnote{one-line headline number}}
+\label{fig:teaser}
+\end{figure}
+
+\section{Introduction}
+Diffusion editors can repaint a masked region from a text instruction, but for fine-grained edits a single attempt is unreliable, and the usual automatic scores do not reveal when it failed. We study this through a concrete, culturally specific application. Singapore's dietary guidance favours small, familiar swaps: \emph{My Healthy Plate} recommends half a plate of fruit and vegetables and a quarter of whole grains~\cite{hpb2024myhealthyplate}, and brown rice has been promoted in public-health materials~\cite{hpb2025wholegrains} and the 2017 National Day Rally~\cite{pmo2017ndr}. A realistic preview of a familiar meal with one ingredient changed---in a food-logging app, or a stall's menu showing a healthier variant---is one way to show such a swap. We study only the editing problem and make no nutritional or behavioural claims; edited food images should be labelled as such.
+
+The edits are hard for two reasons. They are \emph{local}: the edited staple touches other food that must stay recognisable. And brown rice is \emph{fine-grained}: source and target share shape, texture and context and differ mainly in colour and grain, a distinction the generator's prior handles poorly for this local ingredient (\cref{sec:prompts}). A person would look at the result and try again. We automate that loop and ask three questions.
+\textbf{Q1:} at equal budget, does acting on the diagnosed failure beat selecting the best of $K$?
+\textbf{Q2:} how much of the improvement comes from correcting the prompt, and how much from the loop?
+\textbf{Q3:} can a small local VLM be trusted as the selector, and how far does selection inflate its own scores?
+
+Our contributions: (i) a check-and-retry editor whose retry actions depend on the failure, with a matched-budget, prompt\,$\times$\,arm evaluation by an independent judge that answers Q1--Q2; (ii) a diagnosis of two prompt failure modes in CLIP-conditioned editors that raises the checker's brown-rice pass rate from 7\% to 97\% on validation; (iii) a measurement of selector inflation (Q3), relevant to any verifier-in-the-loop generator.
+
+% ---------------------------------------------------------------- page 2 (related ~0.45 col, method ~1.4 col)
+\section{Related Work}
+\paragraph{Diffusion editing.} Latent diffusion~\cite{rombach2022latent} and SDXL~\cite{podell2024sdxl} underlie current editors. InstructPix2Pix~\cite{brooks2023instructpix2pix} edits whole images; SDEdit~\cite{meng2022sdedit} re-noises an input; BrushNet~\cite{ju2024brushnet} adds a masked-inpainting branch to SDXL, which we use because a mask confines the change. Food-image work conditions generation on calories~\cite{yamamoto2025calorie} or edits backgrounds~\cite{feng2025forage}; none targets ingredient swaps in a given meal photo.
+\paragraph{Verification at inference time.} Self-Refine~\cite{madaan2023selfrefine} improves language-model outputs with self-feedback; verifier-guided search improves diffusion samples~\cite{ma2025inferencescaling}; VLMs are used to judge edits~\cite{ku2024viescore}. We separate \emph{selection} from \emph{targeted retries} at equal budget and measure how much an imperfect selector flatters its own choices.
+
+\section{Method}
+\begin{figure}[t]
+\centering
+\figbox{3.0cm}{Fig.~2 (pipeline): photo + mask $\rightarrow$ BrushNet-SDXL on a crop $\rightarrow$ feathered paste-back $\rightarrow$ checker (four questions) $\rightarrow$ pass: output / fail: action (edit not done $\rightarrow$ next prompt, then guidance; unrealistic, added object or changed surroundings $\rightarrow$ new seed).}
+\caption{Check-and-retry. The checker selects; an independent judge evaluates.}
+\label{fig:pipeline}
+\end{figure}
+
+\paragraph{Editor.} Given a photo $x$, a mask $m$ over the staple and a prompt $t$, BrushNet-SDXL generates $g(x,m,t)$ on an upscaled $1024^2$ crop around the mask, pasted back with a feathered mask $\tilde m$: $y=\tilde m\odot g+(1-\tilde m)\odot x$, so pixels outside the mask are original. An fp16 UNet with an fp32 VAE edits in 8\,s on a V100.
+
+\paragraph{Checker.} Qwen2.5-VL-7B (4-bit)~\cite{bai2025qwen25vl} answers one-letter questions on the edited crop: rice type (white, brown, mix, none) or broccoli present and staple visible; something pasted in; real or fake photo; and whether the rest of the meal changed. Each criterion score is an expectation over answer probabilities, \eg $s_\text{edit}=2p(\text{brown})+p(\text{mix})$, so scores are deterministic and continuous and can rank candidates; fixed thresholds define a pass.
+
+\paragraph{Retry policy and arms.} With budget $K$, \textbf{single-shot} returns the first generation; \textbf{best-of-$K$} returns the best of $K$ seeds by CLIP target margin or by checker score; \textbf{check-and-retry} generates, checks, and on failure acts on the main failure (\cref{fig:pipeline}), returning the best candidate tried. All arms share the first generation. One run with $K{=}8$ yields every $K\le8$, because retry paths and seed lists are prefix-consistent. A non-generative \textbf{colour transfer} maps the rice region's CIELAB statistics to those of brown rice and keeps the white rice's texture.
+
+\paragraph{Prompts.}\label{sec:prompts} The original brown-rice instruction (61 tokens) says ``white rice'' three times inside negations (``do not \dots\ leave white rice''), which CLIP's text encoder cannot negate, and our first retry suffix pushed it to 81 tokens, past CLIP's 77, so retries silently lost it. The corrected prompt is short and positive with a negative prompt; naming red, purple and wild rice there removes the generator's drift towards them (30\%$\to$1\% of rice pixels). Of ten candidates searched on validation photos only, the best passes the checker on 97\% of attempts vs.\ 7\% for the original. Every arm is run with both prompt sets.
+
+% ---------------------------------------------------------------- pages 3-4 (experiments ~3.3 col)
+\section{Experiments}
+\paragraph{Data.} Validation: 20 development photos (15 rice, 5 noodles), used only for checker calibration, prompts, thresholds and retry rules. Test: \tbd{} new hawker-meal photos taken by the authors (food only) with person-checked masks, frozen and hashed before any test generation; \tbd{} jobs. One $K{=}8$ run per prompt set, fixed seeds.
+
+\paragraph{Evaluation.} A GPT-5.5 judge, from a different model family than the checker, compares two outputs against the original in both presentation orders and scores edit (0--2), preservation (0--2), realism (1--5) and unrequested additions; \emph{success} means edit $=2$ with nothing added. We report 95\% bootstrap intervals over photos and paired sign tests. Four authors annotated the headline contrast blind to method (randomised sides, attention checks, repeated pairs); no external participants were recruited, which would require ethics approval before data collection. On validation, checker--judge Spearman correlation is 0.70 for edit, 0.34 for preservation and 0.25 for realism.
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+Prompt & Arm ($K{=}4$) & \multicolumn{2}{c}{Success (\%)} & Real. & Win & Gens\\
+ & & T1-B & T2 & & vs.\ S & \\
+\midrule
+-- & Colour transfer & -- & \tbd & \tbd & \tbd & 0\\
+\midrule
+Original & Single-shot (S) & \tbd & \tbd & \tbd & -- & 1\\
+ & Check-and-retry & \tbd & \tbd & \tbd & \tbd & \tbd\\
+\midrule
+Corrected & Single-shot & \tbd & \tbd & \tbd & \tbd & 1\\
+ & Best-of-$K$, CLIP & \tbd & \tbd & \tbd & \tbd & 4\\
+ & Best-of-$K$, checker & \tbd & \tbd & \tbd & \tbd & 4\\
+ & Check-and-retry & \tbd & \tbd & \tbd & \tbd & \tbd\\
+\bottomrule
+\end{tabular}
+\caption{Test results (GPT judge). Success: edit fully done, nothing added. Win vs.\ S: share of pairs preferred over original-prompt single-shot (ties split). Gens: mean generations used.}
+\label{tab:main}
+\end{table}
+
+\paragraph{Q2: prompt vs.\ loop.} \draftnote{Read \cref{tab:main} as prompt\,$\times$\,loop. The corrected prompt alone moves T2 success from \tbd{} to \tbd{}; the loop adds \tbd{} on the original prompt (rescuing a weak prompt) and \tbd{} on the corrected one; T1-B is easy, so the loop mostly keeps its first attempt. Colour transfer reads as tinted white rice: success \tbd{}.}
+
+\paragraph{Q1: selection vs.\ targeted retries.} \draftnote{Best-of-$K$ checker vs.\ check-and-retry at equal $K$ (judge pairs): \tbd{}. Retry uses \tbd{} generations on average vs.\ 4. CLIP vs.\ checker selection: \tbd{}; CLIP margins disagree with the judge on \tbd{}\% of pairs.}
+
+\begin{figure}[t]
+\centering
+\figbox{3.6cm}{Fig.~3, two panels from one $K{=}8$ run per prompt. (a) Judge success vs.\ budget $K\in\{1,2,4,8\}$ for best-of-$K$ (CLIP, checker) and check-and-retry, both prompts. (b) Checker-estimated vs.\ judge success of the checker's selection vs.\ $K$; the gap is selector inflation.}
+\caption{(a) Cost--benefit of the budget. (b) Selecting with an imperfect checker inflates its own estimate of success.}
+\label{fig:budget}
+\end{figure}
+
+\paragraph{Budget and Q3: selector inflation.} \draftnote{\cref{fig:budget}a: gains saturate at $K{=}$\tbd{}; check-and-retry matches best-of-8 with \tbd{} generations. \cref{fig:budget}b: at $K{=}1$ the checker over-estimates success by \tbd{} points, at $K{=}8$ by \tbd{}: selection seeks the checker's blind spots (cold-grey or crumbly rice it calls brown). Implication: verifier-selected outputs need an independent evaluator.}
+
+\paragraph{Human annotation.} \draftnote{Original single-shot vs.\ corrected check-and-retry: annotators prefer the latter in \tbd{}\% of judgements (CI \tbd{}); inter-annotator $\kappa=$\tbd{}; the judge agrees with the annotator majority on \tbd{}\% of pairs.}
+
+\begin{figure*}[t]
+\centering
+\figbox{3.4cm}{Fig.~4 (full width, 3 rows $\times$ 5 columns): original $|$ colour transfer $|$ original prompt, single $|$ corrected, single $|$ corrected, check-and-retry. Rows: a brown-rice success; a broccoli success; a failure the checker passed and the judge rejected (grey or crumbly rice, added bowl rim).}
+\caption{Qualitative test results, including a checker false positive.}
+\label{fig:qual}
+\end{figure*}
+
+\paragraph{Failure analysis.} \draftnote{Failure types with counts: residual cold or grey colour, crumbly texture, added bowl rim, broccoli replacing the staple. Which the checker catches (retry fixes) and which it misses (retry cannot).}
+
+\paragraph{Limitations.} The test set is small (\tbd{} photos, one cuisine). Checker and judge are both VLMs, mitigated by different model families and author annotation; human judgement comes from the authors only; prompts were chosen on 15 validation photos. Visual plausibility is not evidence of nutritional or behavioural benefit.
+
+\section{Conclusion}
+\draftnote{Two sentences answering Q1--Q3 with numbers; one next step (a brown-rice LoRA or reference image for the remaining colour gap; a user study with ethics approval).}
+
+{\small
+\bibliographystyle{ieeenat_fullname}
+\bibliography{main}
+}
+\end{document}

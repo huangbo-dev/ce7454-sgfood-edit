@@ -1,0 +1,16 @@
+# Recorded actual environment. Install the pinned BrushNet vendor separately where noted.
+torch==2.6.0
+torchvision==0.21.0
+transformers==4.38.2
+# diffusers: official TencentARC/BrushNet vendor at 0f9d9e54ca85c40a11a8f0504b4b5b2e7e8fd14d
+accelerate==0.25.0
+numpy==2.5.2
+scipy==1.18.1
+pillow==12.3.0
+pyarrow==25.0.1
+lpips==0.1.4
+huggingface-hub==0.25.2
+safetensors==0.8.0
+matplotlib==3.11.1
+reportlab==5.1.0
+aiohttp==3.14.3

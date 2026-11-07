@@ -1,0 +1,98 @@
+{
+ "n_outputs": 66,
+ "min_valid_mass": 0.99,
+ "all": {
+  "edit": {
+   "spearman": 0.704,
+   "p": 0.0,
+   "n": 66,
+   "checker_mean": 1.054,
+   "judge_mean": 1.174
+  },
+  "preserve": {
+   "spearman": 0.337,
+   "p": 0.0057,
+   "n": 66,
+   "checker_mean": 1.575,
+   "judge_mean": 1.614
+  },
+  "realism": {
+   "spearman": 0.254,
+   "p": 0.0392,
+   "n": 66,
+   "checker_mean": 4.925,
+   "judge_mean": 3.545
+  },
+  "extra": {
+   "spearman": 0.082,
+   "p": 0.5134,
+   "n": 66,
+   "checker_mean": 0.125,
+   "judge_mean": 0.28
+  }
+ },
+ "T1-B": {
+  "edit": {
+   "spearman": 0.443,
+   "p": 0.0068,
+   "n": 36,
+   "checker_mean": 1.642,
+   "judge_mean": 1.514
+  },
+  "preserve": {
+   "spearman": 0.211,
+   "p": 0.2163,
+   "n": 36,
+   "checker_mean": 1.535,
+   "judge_mean": 1.528
+  },
+  "realism": {
+   "spearman": 0.207,
+   "p": 0.2263,
+   "n": 36,
+   "checker_mean": 4.923,
+   "judge_mean": 3.389
+  },
+  "extra": {
+   "spearman": 0.03,
+   "p": 0.8617,
+   "n": 36,
+   "checker_mean": 0.119,
+   "judge_mean": 0.208
+  }
+ },
+ "T2": {
+  "edit": {
+   "spearman": 0.45,
+   "p": 0.0126,
+   "n": 30,
+   "checker_mean": 0.347,
+   "judge_mean": 0.767
+  },
+  "preserve": {
+   "spearman": 0.212,
+   "p": 0.2603,
+   "n": 30,
+   "checker_mean": 1.624,
+   "judge_mean": 1.717
+  },
+  "realism": {
+   "spearman": 0.264,
+   "p": 0.159,
+   "n": 30,
+   "checker_mean": 4.928,
+   "judge_mean": 3.733
+  },
+  "extra": {
+   "spearman": 0.124,
+   "p": 0.5143,
+   "n": 30,
+   "checker_mean": 0.132,
+   "judge_mean": 0.367
+  }
+ },
+ "pair_choice_agreement": {
+  "agree": 21,
+  "n": 31
+ }
+}

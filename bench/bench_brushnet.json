@@ -1,0 +1,41 @@
+{
+ "image_id": "0d905562a1fb",
+ "gpu": "Tesla V100-PCIE-16GB",
+ "dtype": "float16 (UNet+BrushNet), fp32 VAE decode",
+ "offload": false,
+ "baseline_v0": {
+  "dtype": "bfloat16",
+  "offload": true,
+  "steps": 40,
+  "median_seconds": 94.2
+ },
+ "runs": [
+  {
+   "steps": 20,
+   "seconds": 8.21,
+   "peak_GiB": 12.47,
+   "mean_pixel": 171.8,
+   "blank": false,
+   "nan_latent": false,
+   "path": "bench/out/fp16_20steps_0.png"
+  },
+  {
+   "steps": 20,
+   "seconds": 7.95,
+   "peak_GiB": 12.49,
+   "mean_pixel": 171.8,
+   "blank": false,
+   "nan_latent": false,
+   "path": "bench/out/fp16_20steps_1.png"
+  },
+  {
+   "steps": 40,
+   "seconds": 14.62,
+   "peak_GiB": 12.49,
+   "mean_pixel": 172.7,
+   "blank": false,
+   "nan_latent": false,
+   "path": "bench/out/fp16_40steps_2.png"
+  }
+ ]
+}

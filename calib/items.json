@@ -1,0 +1,533 @@
+{
+ "rubric_sha256": "de9065a737f5f2a5f2cc475107386d43260c6b39178588d4c98963e9f1e62cd3",
+ "items": [
+  {
+   "id": "603d50263f",
+   "task": "T1-B",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "62ba85d4bcb53a051d2c.jpg",
+   "crop_box": [
+    0,
+    129,
+    1024,
+    894
+   ],
+   "A": "c3ddf156b1f0bf86e8d0.jpg",
+   "B": "cf62942b49f2085e1726.jpg"
+  },
+  {
+   "id": "ba40405966",
+   "task": "T2",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "5f990f8b39533dd383b7.jpg",
+   "crop_box": [
+    0,
+    224,
+    1024,
+    800
+   ],
+   "A": "e9092530b186968dd3bd.jpg",
+   "B": "a97aba9bcdeca7cd672b.jpg"
+  },
+  {
+   "id": "f5127d0be7",
+   "task": "T2",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "8e003c884598a8cad0d8.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "9ad2d77d91f383bec7d8.jpg",
+   "B": "33227437eb8a24b60efe.jpg"
+  },
+  {
+   "id": "0c560efb80",
+   "task": "T1-B",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "9ea334f929862ddb9d9c.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "45ef730cd205334741d3.jpg",
+   "B": "9e4064a721b969691c6a.jpg"
+  },
+  {
+   "id": "89e2406c9b",
+   "task": "T1-B",
+   "dish": "Wanton mee",
+   "source": "noodles",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing noodles. Keep the noodles, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "a76b9c644c4ef71b90a6.jpg",
+   "crop_box": [
+    0,
+    8,
+    1024,
+    1016
+   ],
+   "A": "2134f450ccf04e5cdd36.jpg",
+   "B": "e3eadbfd528090911359.jpg"
+  },
+  {
+   "id": "4c67ec67af",
+   "task": "T2",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "950eb86c3762fedf5471.jpg",
+   "crop_box": [
+    0,
+    128,
+    1024,
+    896
+   ],
+   "A": "e6fe76fb5a552eb31fc6.jpg",
+   "B": "37315d8d192d400fbddc.jpg"
+  },
+  {
+   "id": "4c4d966406",
+   "task": "T2",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "193391d72af9625b9547.jpg",
+   "crop_box": [
+    0,
+    192,
+    1024,
+    831
+   ],
+   "A": "c824bb4198e4f6fda21b.jpg",
+   "B": "893be0799c7cce3313a0.jpg"
+  },
+  {
+   "id": "e4f8f7c38c",
+   "task": "T2",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "e4effedb7a5f6e6cc25e.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "e5e305c38e372bd58232.jpg",
+   "B": "9e17fcfb95140f8d28c8.jpg"
+  },
+  {
+   "id": "5c59a5b06a",
+   "task": "T1-B",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "5c0f02466f79aace8d40.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "525f57722a802c954f86.jpg",
+   "B": "a820b7750b96bf4d02c9.jpg"
+  },
+  {
+   "id": "6e46e7b98e",
+   "task": "T1-B",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "8e003c884598a8cad0d8.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "00e77eab4867e61b6789.jpg",
+   "B": "6567229b6024e0dbf958.jpg"
+  },
+  {
+   "id": "034da530f4",
+   "task": "T1-B",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "193391d72af9625b9547.jpg",
+   "crop_box": [
+    0,
+    192,
+    1024,
+    831
+   ],
+   "A": "6bbe674275453ec5ef70.jpg",
+   "B": "83c8d1544ca4df440427.jpg"
+  },
+  {
+   "id": "620e095827",
+   "task": "T1-B",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "5ae5c30b2daf91cdd7c3.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "33c95045e66a0da8dc75.jpg",
+   "B": "b6d1f7fe9a482003e3ea.jpg"
+  },
+  {
+   "id": "cf70186ed8",
+   "task": "T2",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "019e2618e93a0b52b520.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "c81fe2ce734ff5f921dc.jpg",
+   "B": "3bdc9242c7e4249e27cf.jpg"
+  },
+  {
+   "id": "03d1f38424",
+   "task": "T1-B",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "019e2618e93a0b52b520.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "083f86f111cf03828884.jpg",
+   "B": "bf090223e506df87e6bc.jpg"
+  },
+  {
+   "id": "a74dc636cb",
+   "task": "T2",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "6f6029ff3bdf39b13303.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "944f32ef83c8484023f0.jpg",
+   "B": "c7e49c8235e71c6081cc.jpg"
+  },
+  {
+   "id": "76ec9879ec",
+   "task": "T1-B",
+   "dish": "Wanton mee",
+   "source": "noodles",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing noodles. Keep the noodles, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "17a477033129a24be522.jpg",
+   "crop_box": [
+    0,
+    128,
+    1024,
+    896
+   ],
+   "A": "17223543580f42b75743.jpg",
+   "B": "40ed0e27de88b5c18c7b.jpg"
+  },
+  {
+   "id": "ca9c5582ef",
+   "task": "T2",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "9ea334f929862ddb9d9c.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "9dc8897bfec70a93afe7.jpg",
+   "B": "c2c0af6b147303299b06.jpg"
+  },
+  {
+   "id": "29d0435a5d",
+   "task": "T1-B",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "5f990f8b39533dd383b7.jpg",
+   "crop_box": [
+    0,
+    224,
+    1024,
+    800
+   ],
+   "A": "ad0ac6a91521038468a3.jpg",
+   "B": "9b51fb5231d65f04b06e.jpg"
+  },
+  {
+   "id": "63ad446cee",
+   "task": "T1-B",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "827f33d27edeb46ce4c2.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "72ea21e851507a8a42c9.jpg",
+   "B": "1edadec58b8ef1c6d680.jpg"
+  },
+  {
+   "id": "20ff066afc",
+   "task": "T1-B",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "6a123fe5837ddf1045c1.jpg",
+   "crop_box": [
+    0,
+    192,
+    1024,
+    832
+   ],
+   "A": "ecf51c9ab94c8762fb01.jpg",
+   "B": "5620418c623f0c725fa1.jpg"
+  },
+  {
+   "id": "e24a62fe8f",
+   "task": "T2",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "5c0f02466f79aace8d40.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "6e0ad7f36a4106e591f7.jpg",
+   "B": "df9113b76c1c6711bfa3.jpg"
+  },
+  {
+   "id": "f3aeb7163b",
+   "task": "T1-B",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "741b8eeeb5108764489d.jpg",
+   "crop_box": [
+    0,
+    223,
+    1024,
+    800
+   ],
+   "A": "e3a30549aac939494ba7.jpg",
+   "B": "ef8a9b0b49ae55ed8b7d.jpg"
+  },
+  {
+   "id": "e5bc784042",
+   "task": "T2",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "827f33d27edeb46ce4c2.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "a132ed402ed3cd760927.jpg",
+   "B": "afbba723c403ca372bdb.jpg"
+  },
+  {
+   "id": "d3abbf556e",
+   "task": "T2",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "5ae5c30b2daf91cdd7c3.jpg",
+   "crop_box": [
+    0,
+    0,
+    1024,
+    1024
+   ],
+   "A": "82b08d0bba9b21566304.jpg",
+   "B": "71df5a67d5c4c3f5123f.jpg"
+  },
+  {
+   "id": "dd13b2f66d",
+   "task": "T1-B",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "6f6029ff3bdf39b13303.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "51c62c4853977d812ba4.jpg",
+   "B": "0d790a5fa773b53ae79d.jpg"
+  },
+  {
+   "id": "dbdb71d6ad",
+   "task": "T1-B",
+   "dish": "Wanton mee",
+   "source": "noodles",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing noodles. Keep the noodles, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "01eaaf5d4ad20787a9c7.jpg",
+   "crop_box": [
+    96,
+    0,
+    927,
+    1024
+   ],
+   "A": "61e989137933a709b09e.jpg",
+   "B": "91ac8c1d3272ad9ad662.jpg"
+  },
+  {
+   "id": "7fb76f0016",
+   "task": "T1-B",
+   "dish": "Wanton mee",
+   "source": "noodles",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing noodles. Keep the noodles, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "380b23e9dd9111cda67d.jpg",
+   "crop_box": [
+    0,
+    170,
+    1024,
+    853
+   ],
+   "A": "590db2b6014e9e4cd72c.jpg",
+   "B": "8c26cc11b8a4a0fb917f.jpg"
+  },
+  {
+   "id": "45e8930e61",
+   "task": "T2",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "62ba85d4bcb53a051d2c.jpg",
+   "crop_box": [
+    0,
+    129,
+    1024,
+    894
+   ],
+   "A": "5cf951bf144652096347.jpg",
+   "B": "57b8a6eae25f4e8fe5dd.jpg"
+  },
+  {
+   "id": "277ddc99e9",
+   "task": "T2",
+   "dish": "chicken rice",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "741b8eeeb5108764489d.jpg",
+   "crop_box": [
+    0,
+    223,
+    1024,
+    800
+   ],
+   "A": "a09e5e70a277df6f49d9.jpg",
+   "B": "b355e5de99233f5ad613.jpg"
+  },
+  {
+   "id": "a1ee2696bf",
+   "task": "T1-B",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "cc6f9b77d73c9020e62a.jpg",
+   "crop_box": [
+    0,
+    1,
+    1024,
+    1022
+   ],
+   "A": "7ede695dad3336b8a14e.jpg",
+   "B": "a02af8dc8946395b6479.jpg"
+  },
+  {
+   "id": "7a8373ac71",
+   "task": "T2",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "6a123fe5837ddf1045c1.jpg",
+   "crop_box": [
+    0,
+    192,
+    1024,
+    832
+   ],
+   "A": "aeda11bd0d204682fade.jpg",
+   "B": "646a9338a26c0cef1bb0.jpg"
+  },
+  {
+   "id": "76b864fceb",
+   "task": "T2",
+   "dish": "ayam penyet",
+   "source": "rice",
+   "instruction": "Replace all visible white rice with cooked whole-grain brown rice. Remove the white rice completely; do not merely recolor it or leave white rice mixed with the brown rice. Keep every other food, the plate, table, background, viewpoint and lighting unchanged. Produce a photorealistic food photograph.",
+   "original": "cc6f9b77d73c9020e62a.jpg",
+   "crop_box": [
+    0,
+    1,
+    1024,
+    1022
+   ],
+   "A": "292958f24b885763c1e9.jpg",
+   "B": "3b07b7804e64ba6a6427.jpg"
+  },
+  {
+   "id": "2929e515da",
+   "task": "T1-B",
+   "dish": "nasi lemak",
+   "source": "rice",
+   "instruction": "Food photograph. Add a few bite-sized cooked broccoli florets scattered naturally on top of the existing rice. Keep the rice, other food, plate, background, lighting and viewpoint unchanged.",
+   "original": "950eb86c3762fedf5471.jpg",
+   "crop_box": [
+    0,
+    128,
+    1024,
+    896
+   ],
+   "A": "f396e5d9352eccdd5619.jpg",
+   "B": "64e8660b89ec1bc18ee5.jpg"
+  }
+ ]
+}

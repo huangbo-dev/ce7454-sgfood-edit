@@ -1,0 +1,110 @@
+# SgFood-Edit (CE7454) — what stays out of Git
+# Rule of thumb: code, configs, prompts, locks and small JSON summaries are tracked; photographs, generated images,
+# model weights, rater data, API keys and environments are not. Run outputs live in $SGEDIT_WORK (~/ce7454-work).
+
+# ── Secrets and credentials ──────────────────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+**/credentials*
+**/auth/
+**/tokens/
+**/secrets/
+**/admin_token*
+
+# ── Python, environments, tooling ───────────────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+envs/
+*.egg-info/
+/build/
+/dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# ── Model weights and large binaries ────────────────────────────────────────────────────────────────────────────
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.bin
+*.onnx
+*.gguf
+*.parquet
+*.npz
+*.npy
+*.zip
+*.tar
+*.tar.gz
+/models/
+/cache/
+
+# ── Photographs and generated images ────────────────────────────────────────────────────────────────────────────
+# Meal photos (FoodSG-233 and new test photos) have their own access terms; outputs are reproducible from runs.
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.mov
+!assets/**
+!report/figures/**
+
+# ── Data and run outputs ────────────────────────────────────────────────────────────────────────────────────────
+# The frozen test split (paths + SHA-256 hashes, no images) IS tracked: it is the lock that proves the split was
+# fixed before any test generation.
+/data/*
+!/data/test_manifest.json
+/raw/
+/work/
+/runs/
+/outputs/
+
+# Benchmark and checker calibration (bench/, calib/): images and raw model answers; summaries are tracked
+/bench/out/
+/calib/media/
+/calib/judge_out/
+/calib/checker_out*/
+/calib/items_key.json
+/calib/val_arms/*/media/
+/calib/val_arms/*/judge_out/
+/calib/val_arms/*/items_key.json
+
+# User study (study/): rater identities, codes and answers never leave the server machine
+/study/responses/
+/study/site/media/
+/study/site/items.json
+/study/items_key.json
+
+# ── Report build ────────────────────────────────────────────────────────────────────────────────────────────────
+/report/*.pdf
+/report/*.aux
+/report/*.bbl
+/report/*.blg
+/report/*.out
+/report/*.log
+/report/*.fls
+/report/*.fdb_latexmk
+/report/*.synctex.gz
+/report/*.toc
+
+# ── Course material and personal notes (not ours to publish) ────────────────────────────────────────────────────
+/lecture-notes/
+/course/
+*.docx
+
+# ── Logs, OS and editor files ───────────────────────────────────────────────────────────────────────────────────
+*.log
+slurm-*.out
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
