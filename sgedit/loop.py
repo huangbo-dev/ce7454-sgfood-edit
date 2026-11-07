@@ -17,6 +17,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from .editor import EditSpec
+from .results import summarize_result
 from .prompts import PROMPT_SETS, ladder
 
 POLICY = {
@@ -130,7 +131,4 @@ class Runner:
         while not tried[-1]['pass'] and len(tried) < K:
             spec = next_spec(spec, job['task'], job['source'], tried[-1]['failure'], len(tried), seeds, self.prompt_set)
             tried.append(self.candidate(job, spec, f'retry{len(tried)}'))
-        best = lambda cs: max(cs, key=lambda c: c['score'])
-        return {'key': job['key'], 'K': K, 'single': seed_cands[0]['tag'], 'best_check': best(seed_cands)['tag'],
-                'retry': best(tried)['tag'], 'retry_steps': [c['tag'] for c in tried], 'retry_passed': tried[-1]['pass'],
-                'seed_tags': [c['tag'] for c in seed_cands]}
+        return summarize_result(job['key'], K, seed_cands, tried)

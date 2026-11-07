@@ -105,7 +105,7 @@ def main():
             res.update({k: j[k] for k in ('image_id', 'task', 'source', 'dish')}, seconds=round(time.perf_counter() - t, 1))
             log.write(json.dumps(res) + '\n'); log.flush()
             print(f"{n}/{len(jobs)} {j['task']} {j['dish']}: retry used {len(res['retry_steps'])} gen, "
-                  f"passed={res['retry_passed']}  {res['seconds']}s", flush=True)
+                  f"selected_passed={res['retry_passed']} last_passed={res['retry_last_passed']}  {res['seconds']}s", flush=True)
 
 
 if __name__ == '__main__':
