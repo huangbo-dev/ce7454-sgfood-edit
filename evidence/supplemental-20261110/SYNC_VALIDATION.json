@@ -1,0 +1,17 @@
+{
+  "verified_utc": "2026-11-10T02:00:01.741028+00:00",
+  "core_tests_passed": 31,
+  "supplemental_synthetic_tests_passed": 20,
+  "checker_author_synthetic_tests_passed": 20,
+  "total_tests_passed": 71,
+  "report_compile_pages": 4,
+  "report_latex_errors": 0,
+  "report_latex_warnings": 0,
+  "report_visual_pages_inspected": 4,
+  "report_scope": "GitHub-safe textual snapshot with author and private-figure placeholders; not a submission PDF.",
+  "source_bytes_checked": true,
+  "new_or_changed_publication_files_checked": 31,
+  "no_media_weights_credentials_or_reviewer_records_in_changed_files": true,
+  "new_inference_or_human_ratings": false,
+  "ci_status": "No repository workflow definition present in this research tree; local checks only."
+}

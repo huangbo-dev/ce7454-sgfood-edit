@@ -1,0 +1,50 @@
+{
+  "generated_utc": "2026-11-09T04:22:55.137700+00:00",
+  "new_checker_join_tests": 20,
+  "new_tests_status": "passed",
+  "compileall": "passed",
+  "peer_review": "completed; endpoint hash fixed; historical candidate-JSON assurance explicitly narrowed and tested",
+  "real_human_responses_read": false,
+  "raw_gpu04_extractor_run": false,
+  "real_human_estimates_computed": false,
+  "study_data_changed": false,
+  "portal_credentials_or_routes_changed": false,
+  "live_overleaf_changed": false,
+  "remote_publication": false,
+  "frozen_package_verification": {
+    "version": "d8aba9859afa277bbe0b",
+    "pairs": 68,
+    "package_lock_sha256": "bc4cf1deccd0e1aa5483093789c00bf8a5385b30c496738ad2a01adfe56326f8",
+    "all_locked_manifests_and_media_verified": true
+  },
+  "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:37:03) [MSC v.1929 64 bit (AMD64)]",
+  "files": {
+    "analysis/checker_join.py": {
+      "bytes": 18005,
+      "sha256": "3a4f5124e1ed57476527eeb60aae61b30f6998c204b5faedc65de862615a463f"
+    },
+    "analysis/compare.py": {
+      "bytes": 27382,
+      "sha256": "99ee8e3d152ff1e3f944b500d3abc31730a8b714b990cb18eeddbd4ac69620a5"
+    },
+    "analysis/endpoint.py": {
+      "bytes": 1209,
+      "sha256": "a0884e9edb26e8f071dc98915d0b5b59729eb8d1e87eefde0826a85b0291abd1"
+    },
+    "tests/test_checker_join.py": {
+      "bytes": 19367,
+      "sha256": "122612b4274953d81a7ffdbe83a9cd65ecd671c549387ba69dc999e1142c307a"
+    },
+    "tests/synthetic_fixture.py": {
+      "bytes": 4237,
+      "sha256": "41133b2140b83ac18d491b56defee1a7e0532248a69e06cfc2991ed053ecacd5"
+    },
+    "README.md": {
+      "bytes": 7618,
+      "sha256": "56d694795b196a221cd485719268599fe4372b40a0c72b6ae1c565e998505ea9"
+    }
+  },
+  "existing_python_regression_tests": 38,
+  "existing_tests_status": "passed",
+  "total_python_tests_passed": 58
+}

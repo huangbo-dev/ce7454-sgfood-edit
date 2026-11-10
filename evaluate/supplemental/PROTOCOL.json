@@ -1,0 +1,39 @@
+{
+  "version": "ce7454-supplemental-e3-e4-v1",
+  "classification": "retrospective shared-photo diagnostic",
+  "e3": {
+    "condition": "tuned",
+    "cases": 34,
+    "photos": 20,
+    "candidates_per_case": 4,
+    "model": "openai/clip-vit-large-patch14",
+    "model_revision": "exact local file hashes required in the run lock",
+    "score": "cosine of CLIP projected image and text embeddings, official model preprocessing",
+    "target_texts": {
+      "T1-B": "A photograph of a Singapore hawker meal with clearly visible cooked broccoli added to the rice or noodles.",
+      "T2": "A photograph of a Singapore hawker meal with light brown wholegrain rice."
+    },
+    "tie_rule": "first maximum in archived seed_tags order",
+    "numeric_mode": "float32, deterministic algorithms, TF32 disabled",
+    "source_results_sha256": "3f3d639f3223128aa131026ab771e8225b6969ca9f209f2261d9688f3b9fbb74",
+    "source_lock_sha256": "a5809a70568701aee000e192569dc197328f9155a80a6702e8c9b667b558099f"
+  },
+  "e4": {
+    "cases": 14,
+    "task": "T2",
+    "source": "rice",
+    "hue_degrees": 30.0,
+    "saturation": 0.35,
+    "value_scale": 0.82,
+    "pixel_rule": "Only existing binary-mask pixels: HSV H=30deg, S=0.35, V=0.82*original V. Round RGB half-up to uint8. No resizing, feathering or per-image tuning.",
+    "checker_thresholds": {
+      "edit": 1.5,
+      "preserve": 1.5,
+      "realism": 3.0,
+      "extra": 0.5
+    },
+    "interpretation": "Chromatic-shortcut stress control. Acceptance is not a false acceptance without the same output's blinded human failure label."
+  },
+  "human_status": "not collected by this tool",
+  "source_policy": "read-only; new output directory; no paid API; no model download"
+}

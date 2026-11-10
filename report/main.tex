@@ -1,39 +1,42 @@
-% CE7454 Project 2, FY2026. Working draft updated 8 November 2026.
-% Official brief: four-page CVPR report; confirm whether references count.
-% Source audited: ce7454-sgfood-edit commit 18fb9b2 (selected-output reporting fix). Held-out results pending.
+% CE7454 Project 2, FY2026. Working draft updated 10 November 2026 (SGT).
+% FY2026 handout: four-page CVPR report; no explicit appendix/reference exemption found.
+% Keep four total pages pending instructor clarification. No appendix is assumed exempt.
+% Source: reporting fix 18fb9b2; shared_hawker_20261108_k4 at f025ee0. Independent evaluation pending.
 % Previous live proposal is preserved in Overleaf History with a dated label.
 \documentclass[10pt,twocolumn,letterpaper]{article}
 \usepackage[pagenumbers]{cvpr}
 \input{preamble}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 \definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
 \usepackage[breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
 \def\paperID{}
 \def\confName{CVPR}
 \def\confYear{2026}
 \newcommand{\draftnote}[1]{\par\noindent{\color{blue}\small\textbf{Draft:} #1}\par}
-\title{SgFood-Edit: Check-and-Retry Editing for Reliable Meal Previews}
-\author{CE7454 Project 2 Group\\
-Nanyang Technological University\\
-\textit{Author names and student IDs to be confirmed}}
+\title{SgFood-Edit: Check-and-Retry Meal Previews with a Vision-Language Checker}
+% GitHub-safe snapshot: author contact/student identifiers remain in private Overleaf.
+\author{CE7454 Project 2 Group 12\\Nanyang Technological University\\
+\textit{Author details maintained in the private submission draft}}
 \begin{document}
 \maketitle
 \begin{abstract}
-Meal-photo editors can depict an ingredient change while introducing unwanted objects, altering surrounding food, or producing implausible textures. We study two local edits to Singaporean meal photographs: adding broccoli while retaining the staple, and changing the appearance of white rice to brown rice. These previews illustrate possible meal changes; they do not establish nutritional content or health benefit. SgFood-Edit combines a frozen BrushNet-SDXL editor with a Qwen2.5-VL checker that diagnoses visual failures and chooses targeted retries. Our evaluation protocol separates prompt correction from retry policy and compares adaptive retries with best-of-$K$ selection at matched generation budgets. An audit of development outputs identifies a mismatch between the final attempted candidate's pass flag and the image actually selected, illustrating why evaluation must follow the delivered output. Held-out experiments and blinded annotation by the authors remain pending.
+SgFood-Edit couples a frozen BrushNet-SDXL editor with a Qwen2.5-VL checker for failure-directed meal-photo editing. On 20 retrospectively shared photographs (34 tasks per prompt condition), revised-prompt retry passes the selecting checker on 28/34 outputs versus 26/34 for best-of-four. The task effects have opposite signs; the exploratory 95\% photo-cluster interval for the overall difference is $[-5.7,+17.1]$ percentage points. Fixed-prompt early stopping also passes 26/34 with the same 68 aggregate generations as retry, so fewer generations alone do not demonstrate useful feedback. Supplemental CLIP selection passes 22/34; unchanged photos (0/34) and a fixed recolouring control (0/14) are rejected. These diagnostics do not establish independent visual quality, nutritional correctness or health benefit.
 \end{abstract}
 
 \section{Introduction}
-Singapore's National Nutrition Survey 2025 reports that carbohydrate intake from refined staples rose from 154\,g/day in 2019 to 166\,g/day in 2025~\cite{hpbNNS2025}. These are nutrient amounts, not the weight of rice or bread. HealthHub encourages gradual wholegrain substitution, including replacing half of a white-rice portion with brown rice~\cite{healthhubWholegrains}. This provides a concrete public-health context for meal-change previews, but neither source establishes an awareness barrier or an effect of generated images on food choices. We study the narrower prerequisite: can a preview depict the requested change without misleading changes to the familiar meal?
+Singapore's National Nutrition Survey 2025 reports refined-staple carbohydrate intake rising from 154 to 166\,g/day in 2019--2025~\cite{hpbNNS2025}, measured as nutrient, not food weight. HealthHub recommends gradual wholegrain substitution~\cite{healthhubWholegrains}. We study faithful meal-change previews, not effects on awareness or food choices.
 
-A plausible image can still communicate the wrong change. Broccoli may replace the staple rather than accompany it; recoloured rice may look grey or purple; an editor may add a bowl rim or change nearby food. Similarity to the input cannot resolve this problem because an unchanged image preserves the dish perfectly while failing the instruction. Nor does pixel preservation outside the editable region establish correctness inside it.
+Plausible edits can replace the staple, merely recolour rice or change nearby food. Input similarity and outside-mask pixel equality cannot establish success: an unchanged image performs no edit.
 
-We keep the existing frozen editor and add failure-directed inference-time control. A vision-language model (VLM) checks each candidate, identifies the main failure and changes the next attempt accordingly. Three questions guide the study: \textbf{Q1}, does targeted retry outperform selecting the best of $K$ candidates at equal budgets? \textbf{Q2}, how much benefit comes from correcting the prompt rather than the retry loop? \textbf{Q3}, how often does a checker favour outputs that an independent evaluator rejects? The contribution sought is a reproducible decision policy and its failure analysis, not a new generator or a demonstrated dietary intervention.
+A vision-language model (VLM) checks each frozen-editor candidate and directs the next attempt by its main failure. Three questions guide the study: \textbf{Q1}, does targeted retry outperform selecting the best of $K$ candidates at the same maximum generation budget? \textbf{Q2}, how much benefit comes from correcting the prompt rather than the retry loop? \textbf{Q3}, how often does a checker favour outputs that an independent evaluator rejects? Our auditable controller separates prompt revision, selection, stopping and adaptive retry. Q1--Q2 are addressed only through checker diagnostics; independent quality and Q3 remain open.
 
 \section{Related Work}
 \paragraph{Controlled image editing.}
-Latent diffusion~\cite{rombach2022latent} and SDXL~\cite{podell2024sdxl} provide the generative backbone. BrushNet~\cite{ju2024brushnet} adds a separate branch for masked-image features, supporting spatially constrained inpainting. Food-image editing has also been studied with caloric targets~\cite{yamamoto2025calorie}, while FoRAGe~\cite{feng2025forage} changes image backgrounds for food advertising. Our task instead changes one meal component while retaining the surrounding dish. We do not infer calories from generated appearance.
+Latent diffusion~\cite{rombach2022latent} and SDXL~\cite{podell2024sdxl} provide the backbone; BrushNet~\cite{ju2024brushnet} adds masked-image features for inpainting. Prior work studies caloric targets~\cite{yamamoto2025calorie} and food-advertising backgrounds~\cite{feng2025forage}. We instead change one meal component while retaining the dish, without inferring calories.
 
 \paragraph{Feedback and evaluation.}
-Self-Refine~\cite{madaan2023selfrefine} studies iterative feedback for language-model outputs. Here, a distinct VLM checker controls a frozen image editor. Qwen2.5-VL~\cite{bai2025qwen25vl} supplies the checker; CLIP~\cite{radford2021clip} supplies an alternative selection baseline. Neither model's general capabilities establish reliability on these meal edits. We therefore separate the model used to select images from evaluation of the selected images and compare targeted feedback with repeated sampling.
+Self-Refine~\cite{madaan2023selfrefine} studies feedback for language-model outputs. Idea2Img~\cite{yang2024idea2img} and SLD~\cite{wu2024sld} use multimodal or language-model feedback to revise text-to-image generation iteratively. InstructPix2Pix~\cite{brooks2023instructpix2pix} follows image-editing instructions; MagicBrush~\cite{zhang2023magicbrush} supplies manually annotated instruction-edit pairs. Ma et al.~\cite{ma2025scaling} scale diffusion inference through verifier-guided noise search, establishing selection and search as relevant precedents. We test whether failure-conditioned updates add value beyond sampling and stopping for food edits. VIEScore~\cite{ku2024viescore} reports evaluation difficulties on editing tasks, motivating external assessment of Qwen2.5-VL-selected outputs~\cite{bai2025qwen25vl}. CLIP~\cite{radford2021clip} is an alternative selector, not ground truth.
 
 \section{Method}
 \subsection{Task and Frozen Editing Stack}
@@ -43,19 +46,9 @@ BrushNet operates on a crop around the editable region at $1024\times1024$ resol
 \begin{equation}
  y=\tilde m\odot g(x,m,t)+(1-\tilde m)\odot x.
 \end{equation}
-Source pixels are unchanged wherever $\tilde m=0$. The transition band still requires visual inspection. We evaluate boundaries using context from both sides, not an outside-only band that the compositing procedure copies unchanged.
+Source pixels are unchanged wherever $\tilde m=0$; an outside-only band therefore cannot assess seam quality.
 
-\begin{figure}[t]
-\centering
-\fbox{\parbox{0.94\linewidth}{\small
-Photo + staple mask + requested edit\\
-$\downarrow$ BrushNet-SDXL crop and feathered paste-back\\
-$\downarrow$ Qwen checker: edit / preservation / realism / extras\\
-Pass or budget exhausted: select candidate.\\
-Failure with budget left: choose a reason-dependent retry.}}
-\caption{Implemented check-and-retry flow. The selected candidate and its own verdict must be evaluated together. The checker assesses visual properties, not nutrition.}
-\label{fig:pipeline}
-\end{figure}
+
 
 \subsection{Checker and Retry Policy}
 The checker asks fixed multiple-choice questions about edit completion, preservation, realism and unrequested additions. Scores are expectations over answer-token probabilities, not calibrated probabilities of success. Let $e,p\in[0,2]$ denote edit and preservation scores, $r\in[1,5]$ realism, and $a\in[0,1]$ unrequested additions. The audited policy ranks candidates by
@@ -64,57 +57,91 @@ The checker asks fixed multiple-choice questions about edit completion, preserva
 \end{equation}
 Its pass rule requires $e,p\geq1.5$, $r\geq3.0$ and $a\leq0.5$. The existing T2 rubric requires complete visual replacement of white rice; a mixed result receives partial credit. This operational target is distinct from HealthHub's gradual half-portion substitution and does not certify wholegrain content.
 
-The initial candidate uses 20 diffusion steps and guidance 7.5. If edit completion fails, the policy advances through a task-specific positive/negative prompt ladder; after the ladder is exhausted, guidance can increase to 10.0 and 12.5. Unrequested additions, realism or preservation failures trigger another seed at base guidance. Failure priority is edit, additions, realism, then preservation. Generation stops when the last candidate passes or budget $K$ is exhausted. The current implementation returns the highest-$S$ candidate tried, which need not be the candidate that triggered stopping.
+The initial candidate uses 20 diffusion steps and guidance 7.5. If edit completion fails, the policy advances through a task-specific positive/negative prompt ladder; after the ladder is exhausted, guidance can increase to 10.0 and 12.5. Unrequested additions, realism or preservation failures trigger another seed at base guidance. Failure priority is edit, additions, realism, then preservation. Generation stops when the last candidate passes or budget $K$ is exhausted. The implementation returns the first candidate attaining the highest $S$ among those tried, which need not be the candidate that triggered stopping.
 
 \subsection{Comparisons and Prompt Control}
-\textbf{Single-shot} returns the first candidate. \textbf{Best-of-$K$ checker} generates $K$ candidates at the base settings and returns the highest-$S$ image. \textbf{Best-of-$K$ CLIP} uses a target-text margin to select among those same candidates. \textbf{Check-and-retry} changes the next attempt using the diagnosed failure. A non-generative colour-transfer control for T2 tests whether changing rice colour alone is sufficient.
+Single-shot returns the first candidate. Best-of-$K$ checker selects the highest $S$ among $K$ base-setting candidates. Adaptive retry uses failure-dependent updates and stopping. Fixed-prompt seed-only stopping replays baseline candidates (Sec.~\ref{sec:budget}); supplemental CLIP and recolouring controls appear in Sec.~\ref{sec:supplemental}.
 
-The original brown-rice prompt used negative instructions within the positive prompt, and a retry extension exceeded the editor's 77-token limit. The revised prompts use shorter positive descriptions and separate negative prompts. Every arm must be evaluated with both original and revised prompts; otherwise a prompt improvement could be incorrectly credited to the retry policy. Prompt selection, checker thresholds and retry rules use development images only.
+The original brown-rice prompt used negative instructions within the positive prompt, and a retry extension exceeded the editor's 77-token limit. The revised prompts use shorter positive descriptions and separate negative prompts. The completed policies are evaluated under both prompt conditions to separate prompt and policy effects. Prompt selection, checker thresholds and retry rules use development images only. On the 35 development tasks, first-image and selected-retry passes rise from 12 and 18 with the original prompts to 24 and 30 with the revised prompts.
 
-\section{Experiments and Current Evidence}
-\subsection{Data, Provenance and Reproducibility}
-The development set contains 20 meal photographs, with 15 rice and five noodle dishes. T1-B applies to all 20 and T2 to the 15 rice photographs, giving 35 edit cases. Baseline assets and development photographs are reused from the PlateEdit work; the CE7454 contribution concerns the checker, prompt diagnosis, retry policy and associated evaluation. Results produced for another course are not new CE7454 test evidence.
+\section{Experiments}
+\subsection{Data and Reproducibility}
+Development uses 20 meal photos (15 rice, five noodle) and 35 tasks. Baseline assets and development photos are reused from PlateEdit, a prior CE6190 course project, whose baseline includes FoodSG~\cite{zheng2023foodsg}. CE7454 contributes inference-time control and evaluation, not a new generator.
 
-The held-out plan uses new, food-only photographs with checked masks. The manifest, source hashes, splits and full configuration must be frozen before test generation, with no overlap with tuning inputs or their derivatives. The audited validation policy uses $K=4$ and seeds beginning 1107, 2207, 3307 and 4407. Budget analyses at $K\in\{1,2,4,8\}$ are planned. Exact checkpoint revisions, environment versions and final test counts will be reported with the locked run.
-\draftnote{Confirm cross-course reuse with the course team. Final test inputs, author names and the reference-page rule are not yet confirmed.}
+The separate \emph{shared-photo retrospective robustness} sample contains 20 author-owned photos (14 rice, six noodle), giving 34 cases per prompt condition and 68 condition--case runs. It reuses the CE6190 S5 collection and prior single-author mask QA; it is not an independent held-out test. No byte/normalised-pixel matches or perceptual-hash distances $\leq8$ were found against the 40-photo FoodSG baseline; this does not establish independence. All masks were retained unchanged: 13 accepted and seven flagged. Mask quality is confounded with dish type: the accepted group has 12 rice and one noodle photo; the flagged group has two rice and five noodle photos.
 
-\subsection{Evaluation Protocol}
-The primary planned contrast is revised-prompt retry versus revised-prompt best-of-$K$ checker at $K=4$, using identical photos, masks and initial seeds. Authors will rate randomised, method-blinded outputs beside the original. Joint visual success requires complete edit ($e=2$), no noticeable preservation error ($p=2$), plausible realism ($r\geq3$), and no unrequested addition ($a=0$), under the existing categorical rubric. Scores are first computed per rater, then averaged per edit case. This endpoint and the analysis must be fixed before viewing test outputs.
+Both prompt conditions were locked before inference on 8 November ($K=4$). Hashes of all inputs, model files and the 365 candidates were audited, and selection and stopping were recomputed without mismatches.
+% Submission checklist in README: confirm authors/student IDs and cross-course reuse permission.
 
-Report the paired success difference with a 95\% photo-cluster bootstrap interval, keeping both tasks and all ratings of a photo together. Also report each dimension, task, rater agreement, and checker false acceptance among checker-passing selected images. Explicit ties must remain ties; the current author-analysis script requires correction before use. A distinct GPT-family judge with reversed pair order is an optional secondary check, subject to an approved API budget. No test judgments or author annotations are yet available.
+\subsection{Evaluation Protocol and Its Limits}
+No real ratings have been collected. Planned revised-prompt retry/best-of-four ratings use matched photos, masks and first seeds. The staged analyzer defines success per rater: $e=p=2$, $r\geq3$ (1--5), $a=0$, then averages binary outcomes within cases. Roster and exposure records must be fixed before collection.
 
-Best-of-$K$ and retry share a maximum generation budget, not necessarily equal realised cost: retry can stop early. Report actual editor/checker calls and latency separately. The runner precomputes baseline candidates, so total batch time is not deployed retry latency. No public-participant or health-behaviour study is claimed.
+Planned intervals resample photos with all their tasks and ratings; dimension scores and rater agreement are reported. False acceptance among checker passes differs from false-positive rate among author failures. Missing/Unsure stay unknown, with bounds; preferences, ties and neither stay separate. Authors are non-naive; another VLM is supplementary.
 
-\subsection{Development Audit, Not Held-Out Results}
-Table~\ref{tab:validation} recomputes checker pass rates from the candidate selected for each of the 35 validation cases. Both prompt settings gain six passing selected outputs over their own first attempt. The revised-prompt retry count is 30, not the 32 indicated by the last-attempt flag. These descriptive development counts are affected by tuning and checker-based selection; they do not establish independent image quality or test generalisation.
+
+
+\subsection{Shared-Photo Checker Diagnostics}
+Table~\ref{tab:shared} reports the selected outputs' own checker verdicts. These are descriptive selector diagnostics, not human success rates. With revised prompts, retry exceeds best-of-four by two cases overall (5.9 percentage points), but the task pattern differs: T1-B gains three, whereas T2 loses one. Paired outcomes are 25 passes under both methods, three retry-only passes, one best-of-four-only pass and five failures under both. An exploratory photo-cluster bootstrap gives a 95\% interval of $[-5.7,+17.1]$ points (10,000 resamples; seed 20261108), retaining each photo's tasks and recomputing the pooled rate. The interval includes zero. Case-level exact McNemar gives $p=0.625$ but ignores within-photo dependence. These same-checker diagnostics establish neither external superiority nor freedom from selection bias.
 
 \begin{table}[t]
 \centering\small
-\begin{tabular}{@{}lrrr@{}}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}llrrrr@{}}
 \toprule
-Prompt & First image & Selected retry & Last flag\\
+Prompt & Task & Single & CLIP & Best-of-4 & Retry\\
 \midrule
-Original & 12/35 & 18/35 & 18/35\\
-Revised & 24/35 & 30/35 & 32/35\\
+Original & T1-B & 10/20 & -- & 14/20 & 17/20\\
+ & T2 & 0/14 & -- & 1/14 & 3/14\\
+ & Total & 10/34 & -- & 15/34 & 20/34\\
+\midrule
+Revised & T1-B & 10/20 & 12/20 & 14/20 & 17/20\\
+ & T2 & 10/14 & 10/14 & 12/14 & 11/14\\
+ & Total & 20/34 & 22/34 & 26/34 & 28/34\\
 \bottomrule
 \end{tabular}
-\caption{Checker-passing validation cases, audited 7 November 2026. \emph{Selected retry} follows the image actually returned; \emph{Last flag} follows the final attempt. No held-out or independent-judge results are shown.}
-\label{tab:validation}
+\caption{Checker passes on 20 shared photos, 34 tasks per condition, $K=4$. CLIP is supplemental (revised only). Best-of-four and retry select with the evaluating checker; counts are not independent quality estimates. All flagged masks remain included.}
+\label{tab:shared}
 \end{table}
 
-Two revised-prompt cases stop after a passing retry but return an earlier, higher-scoring image that fails the conjunctive pass rule. This exposes a distinction between a weighted ranking score and a feasibility constraint. Commit \texttt{18fb9b2} fixes the reporting contract by attaching the pass flag to the selected image and retaining a separate last-attempt flag. Eight offline tests and a 70-case historical replay verified unchanged candidate selections and budgets; archived runs were preserved. This is a metadata correction, not an improved selection policy. Preferring passing candidates would require a separately validated policy.
+\begin{figure}[t]
+\centering
+\IfFileExists{qualitative_examples.pdf}{
+\includegraphics[width=\linewidth]{qualitative_examples.pdf}
+}{\fbox{\parbox[c][0.27\textheight][c]{0.92\linewidth}{\centering
+Private qualitative figure omitted from GitHub.\\
+See the reviewed report for the actual image panels.}}}
+\caption{Revised-prompt checker-selected outputs, without human success labels. Before visual inspection, the first lexicographic photo ID with non-identical outputs was selected for each task. Full frozen images are shown; these examples do not estimate success rates.}
+\label{fig:qualitative}
+\end{figure}
 
-\subsection{Held-Out Analysis to Complete}
-The primary $K=4$ comparison will be accompanied by original-versus-revised prompt contrasts for all four arms. Single-shot, CLIP selection, the T2 colour-transfer control and other budgets are secondary analyses, not substitutes for the primary contrast. Qualitative panels will include original, mask, first attempt, best-of-$K$ and retry outputs, including false positives and failures. No held-out manifest was present in the audited checkouts on 8 November; eligible photographs and checked masks must be frozen before generation.
-\draftnote{Insert only verified test measurements and actual image panels. Record annotation count, agreement, exclusions and uncertainty. Do not treat a planned contrast or a last-attempt flag as a measured improvement.}
+Figure~\ref{fig:qualitative} shows actual selected outputs. In the first row, noodle/soup appearance changes alongside the broccoli addition; in the second, changed rice appearance cannot certify wholegrain content.
+
+
+Prompt revision changes the T2 single-shot count from 0/14 to 10/14, while T1-B counts are unchanged. Comparing original single-shot directly with revised retry would therefore conflate prompt and policy effects. Within revised prompts, retry adds eight checker-passing outputs over single-shot but only two over best-of-four. External ratings are needed to establish visual benefit and audit checker errors. Error on selected outputs alone does not isolate inflation caused by selection.
+
+\subsection{Budget and Early-Stopping Controls}\label{sec:budget}
+Budgets $K\in\{1,2,4\}$ are replayed from archived sequences with the original first-maximum rule, not independent runs. Retry averages 1.00, 1.41 and 2.00 generations, respectively; best-of-$K$ always uses $K$. At $K=2$, both pass 23/34; a net checker difference appears only at $K=4$. These generation counts exclude scoring overhead and do not establish equal per-case cost or latency.
+
+
+
+A stronger stopping control replays the fixed-prompt baseline seeds, stopping at the first checker pass or $K=4$, and returns the highest-$S$ candidate seen. It passes 26/34 revised-prompt cases using 68 generations in total, versus 28/34 and 68 for adaptive retry. Thus early stopping already explains the mean reduction from four to two generations; adaptive feedback's additional visual benefit remains unverified. With original prompts, seed-only stopping gives 15/34 passes and 99 generations, versus adaptive retry's 20/34 and 93.
+
+Five original and seven revised retry/best-of-four pairs are byte-identical and cannot favour either output.
+
+
+\subsection{Supplemental Selector and Stress Controls}\label{sec:supplemental}
+These retrospective controls were specified after the original study and locked before execution on 10 November. CLIP ViT-L/14 ranks all 136 revised base candidates by full-image target-text cosine, using official preprocessing, FP32 and first-maximum seed-order ties, not a target-minus-source margin. Fixed targets were ``A photograph of a Singapore hawker meal with clearly visible cooked broccoli added to the rice or noodles.'' and ``A photograph of a Singapore hawker meal with light brown wholegrain rice.'' It passes 22/34 under Qwen (Table~\ref{tab:shared}), versus 26/34 for checker selection: $-11.8$ points, exploratory photo-cluster 95\% interval $[-22.2,-2.9]$, using the same bootstrap. Selection optimises the same checker, so this is not independent visual-quality evidence.
+
+Unedited sources pass 0/34 (T1-B: 0/20; T2: 0/14). A separate non-generative control fixes HSV hue to $30^\circ$, saturation to 0.35 and value to $0.82V$ inside each of the 14 original rice masks, with half-up RGB rounding and no feathering or per-image tuning. Outside-mask pixels are unchanged. Joint passes are 0/14; edit, preservation, realism and extras criteria pass 0, 14, 1 and 3 cases. Several controls look conspicuously flat. Rejection of this one transform does not establish general recolouring detection or a human false-acceptance rate. These controls add no diffusion calls to the original 365 candidates.
+
+\subsection{Remaining Evidence}
+Per-output ratings of the 34 revised pairs remain essential. Fixed-prompt stopping needs one additional output; CLIP needs 23 outside those pairs. Ratings transfer only for identical pixels, source and task, never pair preferences. Human-judged recovery/reversal examples and new-photo confirmation remain open; mask-stratum comparisons are descriptive.
 
 \section{Limitations and Responsible Use}
-This is a small, local-cuisine editing study. Author annotation is not representative evidence from the public or older adults, and a second VLM can share systematic biases with the selector. Masks, lighting and dish coverage may limit generalisation. Outside-mask pixel equality checks implementation, not realism or correct food identity.
-
-A brown-looking staple is not proof of wholegrain content; adding a few florets does not demonstrate a balanced meal. Photographs cannot establish sodium, calories, portion mass or a recipe's ingredients. A responsible interface would label outputs as generated previews, show the original alongside them and disclose unreliable outputs rather than imply a verified healthier dish. Public-health awareness and behaviour change remain future evaluation questions. Sodium-label literacy is a possible side extension only if reliable label information becomes available; it is outside the present experiments.
+The small retrospective sample cannot establish generalisation. Mask strata are confounded with food type, authors may be non-naive, and another VLM may share checker biases. Appearance cannot verify wholegrains, a balanced meal, sodium, calories or portion mass. Interfaces should show originals, label generated previews and disclose failures. Public understanding and behaviour change require separate studies.
 
 \section{Conclusion}
-SgFood-Edit studies failure-directed control of a frozen meal-image editor while keeping the existing technology stack. The current development audit establishes the importance of separating prompt changes, retry decisions and selected-output reporting. Whether targeted retry outperforms matched-budget selection on unseen meals remains to be answered by the locked test and independent evaluation.
+Prompt design and early stopping explain much of SgFood-Edit's apparent gain. Retry passes the checker on 28/34 cases, versus 26/34 for best-of-four and fixed-prompt stopping; the latter matches retry's 68 generations. The task-dependent difference is uncertain. CLIP and the fixed recolouring control broaden diagnostics, not quality evidence. Human ratings, checker-error analysis and new-photo confirmation remain necessary.
 
 {\small
 \bibliographystyle{ieeenat_fullname}

@@ -1,0 +1,12 @@
+{
+  "overleaf_export_sha256": "e2ce85f4a1ef0ad7ab21b54ec359e159eb98d506e09dd43513d342d7ca443747",
+  "overleaf_export_name": "CE7454_Project2_SgFood_Edit_CVPR (2).zip",
+  "verified_results_bundle_sha256": "c5ea52fb0d35a96eb47f070c94f92b52712aa39db13a060eab0168ea5279993d",
+  "report_adaptations": [
+    "Author contact and student identifiers omitted from GitHub snapshot.",
+    "Private qualitative figure is not copied; a missing-file placeholder is used only for repository builds.",
+    "Trailing whitespace removed; scientific text and numerical results preserved."
+  ],
+  "research_base_commit": "f025ee0dafad708eafff2a3c0b68cb8f345eb454",
+  "no_new_model_or_human_evaluation": true
+}

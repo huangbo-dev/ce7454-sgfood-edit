@@ -1,0 +1,276 @@
+{
+  "verified_utc": "2026-11-09T17:28:37.538953+00:00",
+  "status": "Verified exploratory checker diagnostics, no human-quality evidence",
+  "table": {
+    "all": {
+      "cases": 34,
+      "single": 20,
+      "clip": 22,
+      "best_check": 26,
+      "retry": 28
+    },
+    "T1-B": {
+      "cases": 20,
+      "single": 10,
+      "clip": 12,
+      "best_check": 14,
+      "retry": 17
+    },
+    "T2": {
+      "cases": 14,
+      "single": 10,
+      "clip": 10,
+      "best_check": 12,
+      "retry": 11
+    }
+  },
+  "paired_cluster_bootstrap": {
+    "clip_minus_best_check": {
+      "all": {
+        "cases": 34,
+        "photo_clusters": 20,
+        "difference": -0.11764705882352941,
+        "percentile95": [
+          -0.2222222222222222,
+          -0.02857142857142857
+        ],
+        "paired_counts": {
+          "0/0": 8,
+          "0/1": 4,
+          "1/0": 0,
+          "1/1": 22
+        }
+      },
+      "T1-B": {
+        "cases": 20,
+        "photo_clusters": 20,
+        "difference": -0.1,
+        "percentile95": [
+          -0.25,
+          0.0
+        ],
+        "paired_counts": {
+          "0/0": 6,
+          "0/1": 2,
+          "1/0": 0,
+          "1/1": 12
+        }
+      },
+      "T2": {
+        "cases": 14,
+        "photo_clusters": 14,
+        "difference": -0.14285714285714285,
+        "percentile95": [
+          -0.35714285714285715,
+          0.0
+        ],
+        "paired_counts": {
+          "0/0": 2,
+          "0/1": 2,
+          "1/0": 0,
+          "1/1": 10
+        }
+      }
+    },
+    "retry_minus_clip": {
+      "all": {
+        "cases": 34,
+        "photo_clusters": 20,
+        "difference": 0.17647058823529413,
+        "percentile95": [
+          0.02857142857142857,
+          0.3333333333333333
+        ],
+        "paired_counts": {
+          "0/0": 5,
+          "0/1": 1,
+          "1/0": 7,
+          "1/1": 21
+        }
+      },
+      "T1-B": {
+        "cases": 20,
+        "photo_clusters": 20,
+        "difference": 0.25,
+        "percentile95": [
+          0.1,
+          0.45
+        ],
+        "paired_counts": {
+          "0/0": 3,
+          "0/1": 0,
+          "1/0": 5,
+          "1/1": 12
+        }
+      },
+      "T2": {
+        "cases": 14,
+        "photo_clusters": 14,
+        "difference": 0.07142857142857142,
+        "percentile95": [
+          -0.14285714285714285,
+          0.2857142857142857
+        ],
+        "paired_counts": {
+          "0/0": 2,
+          "0/1": 1,
+          "1/0": 2,
+          "1/1": 9
+        }
+      }
+    },
+    "clip_minus_single": {
+      "all": {
+        "cases": 34,
+        "photo_clusters": 20,
+        "difference": 0.058823529411764705,
+        "percentile95": [
+          -0.05714285714285714,
+          0.17142857142857143
+        ],
+        "paired_counts": {
+          "0/0": 10,
+          "0/1": 2,
+          "1/0": 4,
+          "1/1": 18
+        }
+      },
+      "T1-B": {
+        "cases": 20,
+        "photo_clusters": 20,
+        "difference": 0.1,
+        "percentile95": [
+          -0.1,
+          0.3
+        ],
+        "paired_counts": {
+          "0/0": 7,
+          "0/1": 1,
+          "1/0": 3,
+          "1/1": 9
+        }
+      },
+      "T2": {
+        "cases": 14,
+        "photo_clusters": 14,
+        "difference": 0.0,
+        "percentile95": [
+          -0.21428571428571427,
+          0.21428571428571427
+        ],
+        "paired_counts": {
+          "0/0": 3,
+          "0/1": 1,
+          "1/0": 1,
+          "1/1": 9
+        }
+      }
+    },
+    "retry_minus_best_check": {
+      "all": {
+        "cases": 34,
+        "photo_clusters": 20,
+        "difference": 0.058823529411764705,
+        "percentile95": [
+          -0.05714285714285714,
+          0.17142857142857143
+        ],
+        "paired_counts": {
+          "0/0": 5,
+          "0/1": 1,
+          "1/0": 3,
+          "1/1": 25
+        }
+      },
+      "T1-B": {
+        "cases": 20,
+        "photo_clusters": 20,
+        "difference": 0.15,
+        "percentile95": [
+          0.0,
+          0.3
+        ],
+        "paired_counts": {
+          "0/0": 3,
+          "0/1": 0,
+          "1/0": 3,
+          "1/1": 14
+        }
+      },
+      "T2": {
+        "cases": 14,
+        "photo_clusters": 14,
+        "difference": -0.07142857142857142,
+        "percentile95": [
+          -0.21428571428571427,
+          0.0
+        ],
+        "paired_counts": {
+          "0/0": 2,
+          "0/1": 1,
+          "1/0": 0,
+          "1/1": 11
+        }
+      }
+    }
+  },
+  "bootstrap_method": {
+    "replicates": 10000,
+    "seed": 20261108,
+    "rng": "Python random.Random",
+    "estimand": "Pooled case-weighted paired difference; sample sorted photo IDs with replacement and carry all task rows"
+  },
+  "e3_additional_output_judgments_vs_existing_pairs": 23,
+  "e4": {
+    "cases": 14,
+    "checker_passes": 0,
+    "criterion_pass_counts": {
+      "edit": 0,
+      "preserve": 14,
+      "realism": 1,
+      "extra": 3
+    },
+    "edit_scores": {
+      "min": 0.0275,
+      "max": 1.4754
+    },
+    "sum_checker_seconds": 21.85,
+    "median_checker_seconds": 1.55,
+    "false_acceptance": null,
+    "human_status": "not collected",
+    "pixel_verification_aggregate": {
+      "cases": 14,
+      "outside_mask_pixels_changed": 0,
+      "all_scalar_recipe_exact": true
+    }
+  },
+  "execution": {
+    "E3": {
+      "started_utc": "2026-11-09T17:25:51.782881+00:00",
+      "ended_utc": "2026-11-09T17:26:19.497837+00:00",
+      "wall_seconds": 27.71495866123587,
+      "status": "completed",
+      "physical_cuda_visible_devices": "0",
+      "purpose": "Supplemental diagnostic only; not deployed end-to-end policy latency."
+    },
+    "E4": {
+      "started_utc": "2026-11-09T17:25:51.771000+00:00",
+      "ended_utc": "2026-11-09T17:26:20.970717+00:00",
+      "wall_seconds": 29.19971249299124,
+      "status": "completed",
+      "physical_cuda_visible_devices": "0",
+      "purpose": "Supplemental diagnostic only; not deployed end-to-end policy latency."
+    }
+  },
+  "locks": {
+    "E3": "dc389e33a3dfa0260b3c05ffe6ca56951e0f71739094ed19708d44eb644f212d",
+    "E4": "0afada8bd4702a513e63e191bacee8a3f3a42a8c9324ff379b1f44d386597635"
+  },
+  "protocol_deviations": [],
+  "clarifications": [
+    "E3 is predeclared full-image target cosine, not the older target-minus-source margin.",
+    "CPU/model loading/hash verification included in execution wall times, not a deployed-policy benchmark.",
+    "E4 uses exactly one fixed transform; no broad specificity or human failure inference."
+  ],
+  "publication_note": "Aggregate-only projection of the independently verified receipt. Per-photo records, images, masks, private review mappings and identities are excluded."
+}

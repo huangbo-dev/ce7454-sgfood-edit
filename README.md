@@ -1,253 +1,67 @@
 # SgFood-Edit
 
-**Check-and-retry editing of Singaporean meal photographs** — CE7454 Project 2
-(Nanyang Technological University, 2026).
+Check-and-retry editing of Singaporean meal photographs, CE7454 Project 2.
 
-Given a photo of a hawker meal, SgFood-Edit shows the *same* meal with one familiar swap — white rice replaced by
-brown rice, or a few broccoli florets added — while the rest of the plate stays as it was. Instead of returning its
-first attempt, the editor inspects each output with a vision-language model and retries the ones that failed, with a
-change chosen by *why* they failed.
+## Current status: 10 November 2026
 
-> **Status (7 Nov 2026):** method implemented and tuned on validation photos. Test results, the blinded annotation
-> and the report are in progress. Nothing in this repository is a final result yet.
+The shared-photo retrospective study and supplemental CLIP/recolouring controls are complete. Human ratings, independent new-photo confirmation and final submission checks remain open. The report is a reviewed draft, not a submitted or submission-ready report.
 
----
+This research snapshot includes the selected-output reporting fix, frozen study runner, latest report text, offline author-analysis tools and aggregate supplemental receipts. The optional meal-preview app remains isolated on `app/senior-meal-preview`; it is not part of the research submission or evidence of model deployment.
 
-## Contents
+### Verified checker diagnostics
 
-- [Motivation](#motivation)
-- [Research question](#research-question)
-- [Method](#method)
-- [Experimental design](#experimental-design)
-- [Findings so far (validation only)](#findings-so-far-validation-only)
-- [Repository layout](#repository-layout)
-- [Setup](#setup)
-- [Running](#running)
-- [Data, privacy and integrity](#data-privacy-and-integrity)
-- [What is reused and what is new](#what-is-reused-and-what-is-new)
-- [Course information](#course-information)
+For revised prompts, on 20 photos and 34 tasks:
 
-## Motivation
+| Task | Cases | Single | CLIP selector | Best-of-four checker | Adaptive retry |
+|---|---:|---:|---:|---:|---:|
+| Add broccoli (T1-B) | 20 | 10 | 12 | 14 | 17 |
+| Brown-rice appearance (T2) | 14 | 10 | 10 | 12 | 11 |
+| All | 34 | 20 | 22 | 26 | 28 |
 
-Singapore's dietary guidance favours small, familiar swaps over new diets. *My Healthy Plate* recommends half a plate
-of fruit and vegetables and a quarter of whole grains, and switching from white to brown rice has been promoted by the
-Health Promotion Board and in the 2017 National Day Rally. A realistic preview of **one's own meal** with one ingredient
-changed is one way to show such a swap.
+These are selected-output verdicts from the same Qwen checker that selects the checker-based methods. They do not establish independent visual-quality superiority. The retry-minus-best difference is +5.88 percentage points, with exploratory photo-cluster 95% interval [-5.71, 17.14]. The task effects have opposite signs.
 
-This project studies only the image-editing problem. It makes no claim about nutrition, health outcomes or behaviour.
+Fixed-prompt early stopping also gives 26/34 using 68 generations, the same aggregate generation count as adaptive retry. CLIP uses full-image target-text cosine, not target-minus-source margin. The fixed HSV stress control passes 0/14; rejection of one recipe does not establish general checker specificity or human false acceptance. The reviewed report records no real human ratings as of 09:02 SGT on 10 November; this sync did not read the response database or collect ratings.
 
-The problem is harder than it looks:
+See [aggregate results](evidence/supplemental-20261110/SUMMARY.json), [method details](evaluate/supplemental/README.md), [report source](report/main.tex), and [remaining work](plan/REMAINING_WORK_20261110.md).
 
-- the edited ingredient touches other food, yet everything outside it must stay recognisable;
-- **brown rice is a fine-grained edit** — source and target share shape, texture and context and differ mainly in colour
-  and grain detail;
-- single-shot masked inpainting fails in predictable ways (rice only partly browned or turned grey, broccoli replacing
-  the staple instead of sitting on it, a new picture pasted into the mask), and text–image similarity scores such as
-  CLIP miss many of these failures.
+## Method and provenance
 
-A person editing a photo would look at the result and try again. SgFood-Edit automates that loop.
+A frozen BrushNet-SDXL editor produces masked meal edits. A Qwen2.5-VL-7B-Instruct checker evaluates edit completion, preservation, realism and unrequested additions. Failure-directed retries change prompts, guidance or seeds, with at most four generations. Selection returns the first maximum of the frozen weighted score; stopping and selected-output success are distinct.
 
-## Research question
+Development used 20 meal photos and 35 tasks. The later sample contains 20 author-owned photos reused from CE6190 S5 (14 rice, six noodle), giving 34 tasks per prompt condition. It is a shared-photo retrospective robustness sample, not an independent held-out test. All seven flagged masks remain included; mask-quality strata are confounded with food type. No model weights are trained.
 
-> At a matched compute budget of *K* generations per photo, does an editor that **checks its outputs and retries the
-> failed ones** produce better local-food edits than single-shot masked inpainting? And is a VLM checker a better
-> selector than a cheap CLIP score?
-
-Two properties make this a deep-learning question rather than plumbing. First, the checker is itself an imperfect
-model, so we measure how far its judgements agree with an independent judge before relying on it, and keep selection
-and evaluation on different models. Second, the brown-rice task probes what a general image generator actually knows
-about a local ingredient, and separates failures caused by the prompt from failures of the model's prior.
-
-## Method
-
-```
- photo + mask + task
-        │
-        ▼
- ┌──────────────────────┐    candidate    ┌──────────────────────────────┐
- │ Editor               │ ──────────────► │ Checker (Qwen2.5-VL-7B, 4b)  │
- │ BrushNet-SDXL on a   │                 │ edit done? rest kept?        │
- │ crop around the mask │                 │ realistic? anything added?   │
- │ + feathered paste    │                 └──────────────┬───────────────┘
- └──────────▲───────────┘                                │
-            │      pass ─────────────────────────────────┼──► output
-            │                                            │
-            └──── retry action ◄──── failure reason ◄────┘
-                  edit not done → next prompt on the task's ladder, then higher guidance
-                  unrealistic / unrequested addition / changed surroundings → new seed
-```
-
-| Component | File | Details |
-|---|---|---|
-| **Editor** | `sgedit/editor.py` | BrushNet-SDXL masked inpainting on an upscaled 1024 px crop around the mask, pasted back with a feathered mask so pixels outside it are the original. fp16 UNet with fp32 VAE on a 16 GB V100: ~8 s per edit. Prompts over CLIP's 77-token limit are rejected rather than silently truncated. |
-| **Prompts** | `sgedit/prompts.py` | Per task: a short, positive base prompt, a negative prompt, and a *ladder* of stronger variants used on retries. |
-| **Prompt search** | `sgedit/prompt_search.py` | Chooses prompts on validation photos: generates every candidate with fixed seeds and scores it by checker probabilities and colour statistics of the edited region, then saves contact sheets for visual inspection. |
-| **Checker** | `sgedit/checker.py` | Qwen2.5-VL-7B-Instruct (4-bit) answers fixed one-letter questions (rice type, broccoli present, staple visible, pasted-in object, real photo?). Scores are expectations over answer probabilities, so they are deterministic and continuous. Used for **selection only**. |
-| **Retry loop and arms** | `sgedit/loop.py`, `sgedit/run_arms.py` | Implements the four comparison arms at a shared budget, under either prompt set (`--prompts tuned/baseline`); thresholds, weights and prompts are written to each run's `LOCK.json`. |
-| **Colour-transfer baseline** | `sgedit/tint_baseline.py` | Non-generative brown-rice baseline: CIELAB statistics transfer inside the mask, target measured on validation outputs. |
-| **Blinded annotation** | `study/` | Self-hosted pairwise annotation site for the project team: annotator codes, practice item, attention checks, repeated pairs; analysis with inter-annotator agreement. |
-
-## Experimental design
-
-**Tasks.** T1-B: add a few broccoli florets on top of the rice or noodles, keeping the staple. T2: replace white rice
-with cooked brown rice.
-
-**Arms** (same photos, masks, prompts and seeds; at most *K* generations each):
-
-| Arm | What it tests |
-|---|---|
-| Single-shot | Baseline: the first generation |
-| Best-of-*K*, CLIP margin | Is a cheap automatic score enough to pick? |
-| Best-of-*K*, checker | Value of the checker as a selector |
-| Check-and-retry | Selection plus retries targeted at the failure |
-| Colour transfer (T2 only) | Is generation needed at all? |
-| Ablations | *K* ∈ {2, 4, 8}; checker with one criterion removed |
-
-**Prompt × arm.** Every arm runs under two prompt sets: the *baseline* wording (the original long instruction) and the
-*tuned* prompts chosen on validation. This separates what the wording fixes from what the loop adds, and shows
-whether the loop rescues a weak prompt.
-
-**Evaluation.** A GPT-5.5 judge with a fixed rubric compares outputs pairwise in both orders and scores edit
-success, preservation, realism and unrequested additions; it is a different model family from the checker, so
-selection and evaluation do not share blind spots. Project-team members annotate the headline contrast (baseline
-prompt, single-shot vs tuned prompt, check-and-retry) blind to method; we report inter-annotator and judge–annotator
-agreement. To measure selection bias we compare checker and judge verdicts on checker-selected versus first outputs.
-
-**No external participants.** Collecting ratings from people outside the team counts as human-subjects research
-under NTU's policy and needs School ethics (ERC/NTU-IRB) approval *before* data collection; approval cannot be given
-retrospectively and was not feasible in the project timeline. Human judgement therefore comes only from blinded
-annotation by the authors, reported as such.
-
-**Splits.** *Validation*: 20 development photos (15 rice, 5 noodles), used only to calibrate the checker and choose
-prompts, thresholds and retry rules. *Test*: new photos of rice and noodle hawker meals, frozen in
-`data/test_manifest.json` (paths and SHA-256 hashes) before any test generation.
-
-## Findings so far (validation only)
-
-These guide design choices; they are not test results.
-
-- **Checker vs judge** (`calib/calib_report_v2_7b4bit.json`, 66 outputs): Spearman agreement 0.70 on *edit done*,
-  0.34 on *preserved*, 0.25 on *realism* and 0.08 on *unrequested additions*; the two pick the same one of two
-  candidates in 21 of 31 pairs. The 7B model was chosen over 3B on this agreement.
-- **Brown rice is the bottleneck.** With the original long prompt, broccoli usually passed within 1–3 tries but every
-  brown-rice job failed after 4: the rice came out grey and washed-out. Two prompt causes were found and fixed:
-  1. the prompt said "white rice" three times inside negations, which CLIP's text encoder cannot read as negations;
-  2. the retry wording pushed the prompt past CLIP's 77 tokens, so retries silently lost it.
-- With a short positive prompt plus a negative prompt the colour changes strongly but drifts to red or purple rice:
-  the generator's idea of "brown rice" is not the light-tan rice served at hawker stalls. Naming red, purple and wild
-  rice in the negative prompt removes the drift (red/purple pixels 30 % → 1 %).
-- **Prompt search** (15 validation rice photos × 2 seeds, 10 prompts): the best prompt passes the checker's
-  *edit done* test in 97 % of attempts vs 7 % for the original; refinements (longer negative prompt, "warm golden",
-  lower guidance, "steamed, fluffy") all did worse. Remaining visible flaws: colour slightly cold, occasional crumbly
-  texture or an added bowl rim.
-
-See `plan/DESIGN_REVIEW.md` for a critical review of the motivation, the research value and the human evaluation,
-and the decisions taken.
+The completed generation used commit `f025ee0dafad708eafff2a3c0b68cb8f345eb454`, which includes reporting fix `18fb9b2` and protocol preparation `9d4d237`. Supplemental control code and protocol were frozen before their execution. This synchronization does not modify source runs, model weights, prompts, thresholds, reviewer records or private study packages.
 
 ## Repository layout
 
-```
-sgedit/        CE7454 method: editor, prompts, prompt search, checker, retry loop, arms runner, test-split freezing
-evaluate/      GPT judge, blinded arm judging, best-of-K CLIP selector, report tables (Table 1, Fig. 3)
-calib/         checker calibration against the GPT judge on validation photos (scripts + JSON summaries)
-bench/         editor speed and memory benchmark (feasibility check on a V100)
-study/         blinded pairwise team-annotation site and its analysis
-plan/          project plan, findings log, design review and open decisions
-report/        4-page CVPR-format report (main.tex, main.bib)
-requirements/  pinned environments: brushnet (editor), checker (checker + judge)
-```
+- `sgedit/`: editor, checker, prompts, retry loop, reporting, preflight and locked robustness runner.
+- `evaluate/`: original evaluation tools; `evaluate/supplemental/` contains the executed E3/E4 controls and synthetic tests.
+- `study/`: original team-annotation site; `study/author_analysis/` contains the separate protocol-aligned offline comparative and checker/author analyzers. See its README before use.
+- `evidence/`: small aggregate receipts, without photographs, masks or reviewer identities.
+- `report/`: GitHub-safe snapshot of the reviewed report text, with private author identifiers and image panels omitted.
+- `plan/`: protocols, prior design notes and current remaining-work checklist.
+- `requirements/`, `calib/`, `bench/`: environment requirements and development tools.
 
-## Setup
+## Offline verification
 
-Hardware used: 2 × NVIDIA V100 16 GB (editor on one GPU, checker on the other), Python 3.12, CUDA 12.4.
+Use an already provisioned compatible environment. These commands do not run models or collect ratings:
 
-**Environments**
-
-| Environment | Requirements | Used by |
-|---|---|---|
-| Editor | `requirements/brushnet.txt` + the official TencentARC BrushNet `diffusers` fork at commit `0f9d9e54` | `sgedit.editor`, `run_arms`, `prompt_search`, `bench/` |
-| Checker | `requirements/checker.txt` | `sgedit.checker`, `calib/` (GPT judge) |
-
-**Models** (downloaded separately, not in this repository): Stable Diffusion XL base 1.0, the BrushNet-SDXL
-segmentation-mask checkpoint, and Qwen2.5-VL-7B-Instruct.
-
-**Locations** are set by environment variables (defaults in brackets):
-
-| Variable | Meaning |
-|---|---|
-| `SGEDIT_BASELINE` [`~/plateedit-v10`] | PlateEdit baseline project: development photos and masks, baseline prompts, BrushNet and SDXL weights, editor environment |
-| `SGEDIT_WORK` [`~/ce7454-work`] | CE7454 runs, caches and environments |
-| `SITE_TS_DIR`, `SITE_PORT`, `SITE_HOST`, `SITE_PY` | annotation-site launcher: Tailscale folder, port, tailnet name, Python (for hosting it elsewhere, e.g. the Spark) |
-| `HF_HUB_CACHE` | Hugging Face model cache (we use `$SGEDIT_WORK/cache/hf`) |
-| `OPENAI_API_KEY` | GPT judge (`evaluate/judge.py`); never commit it |
-
-## Running
-
-```bash
-export HF_HUB_CACHE=${SGEDIT_WORK:-$HOME/ce7454-work}/cache/hf
-# 1. Checker service on GPU 1
-CUDA_VISIBLE_DEVICES=1 python -m sgedit.checker serve --port 8781            # checker environment
-
-# 2. Prompt search on validation photos (repeat per round with a new candidates file)
-CUDA_VISIBLE_DEVICES=0 python -m sgedit.prompt_search --task T2 --round r1 --candidates r1.json   # editor env
-
-# 3. All arms on validation (one run name per policy version and prompt set)
-CUDA_VISIBLE_DEVICES=0 python -m sgedit.run_arms --set validation --run val_v2_<date> --K 4 --prompts tuned
-
-# 4. Freeze the test split (photos.csv + photos + masks), commit data/test_manifest.json, then run the test arms
-python -m sgedit.test_split --photos <folder>
-# K=8: arms at every budget K <= 8 are derived from one run (retry paths and seed lists are prefix-consistent)
-CUDA_VISIBLE_DEVICES=0 python -m sgedit.run_arms --set test --run test_tuned --K 8 --prompts tuned
-CUDA_VISIBLE_DEVICES=0 python -m sgedit.run_arms --set test --run test_baseline --K 8 --prompts baseline
-
-# 5. Evaluation: CLIP selector arm and colour-transfer baseline, then every distinct selected output judged
-#    against the shared reference (baseline prompt, single-shot) -> Table 1 and Figure 3
-python evaluate/clip_select.py --run test_tuned; python evaluate/clip_select.py --run test_baseline   # checker env
-python -m sgedit.tint_baseline --run test_baseline
-python evaluate/report_tables.py build --name test_report --runs tuned=test_tuned baseline=test_baseline
-python evaluate/judge.py --items-dir $SGEDIT_WORK/runs/test_report/judge --model gpt-5.5-2026-04-23
-python evaluate/report_tables.py report --name test_report --k-main 4
-# optional within-run pairs (e.g. best_check vs retry at the run's K): evaluate/judge_arms.py build|report --run ...
-
-# 6. Blinded team annotation of the headline contrast
-python study/build_study.py --first test_baseline:single --second test_tuned:retry@4
-./study/start_site.sh
-python study/site_server.py add-rater "Annotator 1"                           # one code per team member
-python study/analyze.py
-```
+```sh
+python -m unittest discover -s tests -v
+(cd evaluate/supplemental && python -B -m unittest -v test_supplemental_controls)
+(cd study/author_analysis && python -B -m unittest discover -s tests -v)
 ```
 
-Every run writes `LOCK.json` (policy, prompts, code hashes, input hashes). A test run refuses to continue if any of
-them changes.
+Model execution requires separately approved inputs, the exact cached weights and runtime, verified locks and an available authorized GPU. Keep source data and all new run outputs outside Git. The original judge tools can incur API cost and are not part of the commands above.
 
-## Data, privacy and integrity
+## Data and privacy
 
-- **Not in this repository:** meal photographs (FoodSG-233 and new test photos), masks, generated images, model
-  weights, API keys, rater identities and answers, environments. FoodSG-233 must be obtained under its own access terms.
-- **Test photos** are taken or collected for this project; anyone identifiable in a photo must have given consent.
-- **Human annotation:** project-team members only, signed in with annotator codes; names stay on the server machine
-  and never enter the annotation records or Git. No external participants (see *No external participants* above).
-- **No tuning on test.** Prompts, thresholds and retry rules are chosen on validation photos only. The checker selects;
-  the judge and people evaluate. Checker scores are never reported as the result.
+Do not commit source or generated meal images, masks, model weights, credentials, reviewer codes, rosters, mappings or responses. FoodSG assets retain their original access terms. Use exact byte/hash joins for author evaluation; do not invent labels or derive them from checker outcomes. Keep missing and Unsure answers explicit.
 
-## What is reused and what is new
+The private reviewed report contains actual qualitative panels. This GitHub copy uses a placeholder when the locally supplied figure is absent and omits author contact/student identifiers. It is not byte-identical to the submission draft. No raw images or compiled PDF are published here.
 
-The baseline comes from our earlier PlateEdit project (CE6190). This repository does not copy its code; it reads its
-development photos, frozen masks, baseline prompts and model weights from `$SGEDIT_BASELINE`, read-only. No result from
-that project is presented as CE7454 evidence; every comparison is re-run under the CE7454 protocol.
+No outside-team ratings, surveys or feedback are authorized by this repository; ethics approval is required before such collection. Appearance alone does not establish nutrition, wholegrain content, health benefit or behaviour change.
 
-| Part | Origin |
-|---|---|
-| Development photos (FoodSG-233 subset), frozen masks, baseline prompts, BrushNet/SDXL weights | PlateEdit baseline, read from `$SGEDIT_BASELINE` |
-| Feathered paste-back rule and crop-around-mask editing | PlateEdit baseline findings, re-implemented in `sgedit/editor.py` |
-| `sgedit/`: fast editor, prompt ladders and 77-token guard, prompt search, VLM checker, check-and-retry loop, matched-budget arms | **CE7454** |
-| `calib/`: checker-vs-judge calibration | **CE7454** |
-| `bench/`: fp16 BrushNet on a V100 (8 s vs 94 s per edit) | **CE7454** |
-| `evaluate/`: GPT judge, arm comparison, CLIP selector; `study/`: blinded team annotation (adapted from the baseline's rating tools) | **CE7454** |
-| `sgedit/tint_baseline.py`: colour-transfer baseline | **CE7454** |
-| New test photos, test runs, judge evaluation, annotation, report | **CE7454** (in progress) |
+## Course deliverables
 
-## Course information
-
-CE7454 Project 2, FY2026: groups of 4–6; due 15 November 2026, 23:59. Deliverables are a 4-page CVPR-format report
-(novelty and difficulty, technical soundness, experimental analysis, clarity) and a presentation video.
+The repository records the course deadline as 15 November 2026, 23:59, with a four-page CVPR-format report and presentation video. Keep four total pages unless the instructor confirms an exemption. Final roster, identifiers, reuse disclosure, human evidence and submission remain to be checked. A five-minute demo is a presentation preference, not a verified course requirement.

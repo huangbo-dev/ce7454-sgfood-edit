@@ -108,3 +108,11 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Private author-analysis inputs and exports
+/study/author_analysis/data/
+/study/author_analysis/exports/
+/study/author_analysis/outputs/
+/study/author_analysis/roster*.json
+/study/author_analysis/checker-metadata*.json
+/report/qualitative_examples.pdf
