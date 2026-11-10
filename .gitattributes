@@ -1,0 +1,8 @@
+# Preserve reviewed receipt/source bytes across Git line-ending settings.
+study/author_analysis/REVISION_VALIDATION_20261110.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/backend/issue_credential.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/backend/server.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/frontend/style.css -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/stage_spark.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/tests/test_server.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+study/public_review/tests/test_staging.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

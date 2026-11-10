@@ -36,12 +36,7 @@ def safe_token(value, name):
     return value
 
 
-def checked_candidate(path, policy):
-    obj, metadata_sha = read_snapshot(path)
-    png = path.with_suffix('.png')
-    require(png.is_file() and not png.is_symlink(), 'Missing or unsafe candidate image.')
-    image_sha = digest(png.read_bytes())
-    require(obj.get('sha256') == image_sha, 'Candidate image hash mismatch.')
+def checked_scores(obj, policy):
     scores = {}
     ranges = {'edit': (0, 2), 'preserve': (0, 2), 'realism': (1, 5), 'extra': (0, 1)}
     for field, (lo, hi) in ranges.items():
@@ -59,8 +54,79 @@ def checked_candidate(path, policy):
     require(type(obj.get('pass')) is bool and obj['pass'] == passed, 'Candidate checker verdict disagrees with frozen policy.')
     require(type(obj.get('score')) in (int, float) and math.isfinite(obj['score'])
             and math.isclose(obj['score'], score, abs_tol=1e-12), 'Candidate ranking score mismatch.')
-    return {'output_sha256': image_sha, 'checker_pass': passed, 'checker_scores': scores,
-            'ranking_score': score, 'candidate_metadata_sha256': metadata_sha}
+    return {'output_sha256': obj['sha256'], 'checker_pass': passed, 'checker_scores': scores,
+            'ranking_score': score}
+
+
+def checked_candidate(path, policy):
+    obj, metadata_sha = read_snapshot(path)
+    png = path.with_suffix('.png')
+    require(png.is_file() and not png.is_symlink(), 'Missing or unsafe candidate image.')
+    image_sha = digest(png.read_bytes())
+    require(obj.get('sha256') == image_sha, 'Candidate image hash mismatch.')
+    out = checked_scores(obj, policy)
+    out['candidate_metadata_sha256'] = metadata_sha
+    return out
+
+
+def extract_e3_snapshot(lock_path, expected_sha, public, private, package_lock_sha):
+    """Recover primary checker records from the preserved E3 lock, not a live run.
+
+    The receipt must be independently retained. Original-condition records and
+    complete retry trajectories are absent; neither is reconstructed or guessed.
+    """
+    compare.validate_design(public, private)
+    lock, lock_sha = read_snapshot(lock_path)
+    require(isinstance(expected_sha,str) and re.fullmatch(r'[a-f0-9]{64}',expected_sha)
+            and lock_sha == expected_sha, 'E3 snapshot receipt mismatch.')
+    require(lock.get('study') == 'E3' and lock['protocol']['e3']['condition'] == 'tuned', 'Unsupported historical study snapshot.')
+    compare.utc(lock.get('created_utc'))
+    files = lock['source']['files']; source = private['conditions']['tuned']
+    require(files.get('results.jsonl') == source['result_sha256']
+            and files.get('LOCK.json') == source['lock_sha256'], 'E3 snapshot refers to different frozen source results.')
+    policy = {'pass': {'edit':1.5,'preserve':1.5,'realism':3.0,'extra':.5},
+              'weights': {'edit':1.0,'preserve':.5,'realism':.5,'extra':.5}}
+    require(lock['protocol']['e4']['checker_thresholds'] == policy['pass'], 'Historical snapshot checker thresholds differ.')
+    cases = lock['source']['cases']; keyed = {}
+    require(isinstance(cases,list) and len(cases)==34,'Expected 34 primary E3 cases.')
+    for case in cases:
+        key = safe_token(case.get('key'),'historical job key')
+        require(key not in keyed,'Duplicate historical case.');keyed[key]=case
+    entries = {iid:e for iid,e in private['items'].items() if e['condition']=='tuned'}
+    require(set(keyed)=={e['source_job_key'] for e in entries.values()},'Historical case cohort mismatch.')
+    result = {}; verified_records = set()
+    for iid,e in sorted(entries.items()):
+        key = e['source_job_key'];case = keyed[key]
+        require((case.get('photo_id'),case.get('task'))==(e['photo_id'],e['task']),'Historical photo/task mismatch.')
+        seeds = case.get('seed_tags')
+        require(isinstance(seeds,list) and len(seeds)==4 and len(set(seeds))==4,'Invalid historical four-seed order.')
+        records = case.get('records',{}); expected_tags=set(seeds)|{case.get('retry')}
+        require(set(records)==expected_tags,'Historical candidate record set mismatch.')
+        checks = {}
+        for tag,obj in records.items():
+            safe_token(tag,'historical candidate tag')
+            rel='candidates/'+key+'/'+tag
+            require(obj.get('tag')==tag and files.get(rel+'.png')==obj.get('sha256'),'Historical image hash/tag mismatch.')
+            meta_sha=files.get(rel+'.json')
+            require(isinstance(meta_sha,str) and re.fullmatch(r'[a-f0-9]{64}',meta_sha),'Missing historical checker-JSON receipt.')
+            checks[tag]=checked_scores(obj,policy)
+            checks[tag]['candidate_metadata_sha256']=meta_sha
+            verified_records.add(rel+'.json')
+        require(max(seeds,key=lambda t:checks[t]['ranking_score'])==case.get('best_check'),'Historical best-of-four selection mismatch.')
+        outputs={}
+        for method in METHODS:
+            chosen=case.get(method);frozen=e['selected'][method]
+            require(chosen==frozen['tag'] and checks[chosen]['output_sha256']==frozen['sha256'],'Historical selection differs from reviewed pixels.')
+            out=dict(checks[chosen]);out.update({'candidate_tag':chosen,'generation_count':4 if method=='best_check' else None})
+            outputs[method]=out
+        result[iid]={'condition':'tuned','photo_id':e['photo_id'],'task':e['task'],'source_job_key':key,'outputs':outputs}
+    return {'schema_version':2,'study_version':public['version'],'package_lock_sha256':package_lock_sha,
+        'available_conditions':['tuned'],'items':result,
+        'source_provenance':{'tuned':{'results_sha256':source['result_sha256'],'lock_sha256':source['lock_sha256'],
+            'e3_snapshot_sha256':lock_sha,'snapshot_utc':lock['created_utc'],'verified_embedded_candidate_records':len(verified_records),
+            'candidate_metadata_assurance':'Embedded records and checker-JSON hash receipts from independently retained E3 pre-study snapshot. Not a new live read or proof of original inference-time immutability.'}},
+        'cost_definition':'Best-of-four is four archived seeds; retry trajectory is absent, so its generation count is unknown.',
+        'selection_verification':'Best-of-four first-maximum recomputed; selected retry tag and pixels match frozen review mapping. Full retry stopping/selection trajectory is not included.'}
 
 
 def extract_metadata(run_root, public, private, package_lock_sha):
@@ -129,14 +195,25 @@ def extract_metadata(run_root, public, private, package_lock_sha):
 
 
 def validate_metadata(metadata, public, private, package_lock_sha):
-    require(metadata.get('schema_version') == 1 and metadata.get('study_version') == public['version'], 'Checker metadata schema/version mismatch.')
+    version = metadata.get('schema_version')
+    require(version in (1,2) and metadata.get('study_version') == public['version'], 'Checker metadata schema/version mismatch.')
     require(metadata.get('package_lock_sha256') == package_lock_sha, 'Checker metadata binds a different frozen package.')
-    require(set(metadata.get('items', {})) == set(private['items']), 'Checker metadata case set mismatch.')
-    for condition in CONDITIONS:
+    conditions = list(CONDITIONS) if version==1 else metadata.get('available_conditions')
+    require(conditions==list(CONDITIONS) if version==1 else conditions==['tuned'],'Unsupported partial metadata coverage.')
+    expected_items={iid for iid,e in private['items'].items() if e['condition'] in conditions}
+    require(set(metadata.get('items', {})) == expected_items, 'Checker metadata case set mismatch.')
+    for condition in conditions:
         source = metadata['source_provenance'][condition]
         expected = private['conditions'][condition]
         require(source['results_sha256'] == expected['result_sha256'] and source['lock_sha256'] == expected['lock_sha256'], 'Checker metadata source provenance mismatch.')
+        if version==2:
+            receipt=source.get('e3_snapshot_sha256')
+            require(isinstance(receipt,str) and re.fullmatch(r'[a-f0-9]{64}',receipt),'Missing historical E3 snapshot receipt.')
+            compare.utc(source.get('snapshot_utc'))
+            count=source.get('verified_embedded_candidate_records')
+            require(type(count) is int and 136<=count<=170,'Invalid historical candidate record coverage.')
     for iid, entry in private['items'].items():
+        if entry['condition'] not in conditions:continue
         row = metadata['items'][iid]
         require((row.get('condition'), row.get('photo_id'), row.get('task'), row.get('source_job_key')) ==
                 (entry['condition'], entry['photo_id'], entry['task'], entry['source_job_key']), 'Checker join identity mismatch.')
@@ -145,7 +222,8 @@ def validate_metadata(metadata, public, private, package_lock_sha):
             obj = row['outputs'][method]; selected = entry['selected'][method]
             require(obj.get('output_sha256') == selected['sha256'] and obj.get('candidate_tag') == selected['tag'], 'Checker join output hash/tag mismatch.')
             require(type(obj.get('checker_pass')) is bool, 'Checker verdict must be boolean.')
-            require(type(obj.get('generation_count')) is int and 1 <= obj['generation_count'] <= 4, 'Invalid policy generation count.')
+            count=obj.get('generation_count')
+            require(count is None if version==2 and method=='retry' else type(count) is int and 1<=count<=4, 'Invalid policy generation count.')
             require(method != 'best_check' or obj['generation_count'] == 4, 'Best-of-four count changed.')
     return metadata
 
@@ -198,10 +276,13 @@ def analyze(public, private, roster, exports, metadata, package_lock_sha):
         'limitations': ['Authors may know these photos; a checker/author disagreement does not alone establish objective error.',
                        'No population-of-raters claim, significance test, new exclusion, nutrition or health inference.',
                        'Costs are recorded generation calls, not standalone latency or physical batch runtime.',
-                       'Run results, selection and pixels match frozen receipts. Candidate checker JSON is an extraction-time snapshot, not independently authenticated historical metadata; confirm a historical checker-JSON lock before stronger provenance claims.',
+                       'Checker provenance is specific to the recorded source snapshot. Historical E3 imports bind a preserved later snapshot, not original inference-time immutability; live extraction without such a snapshot has weaker historical assurance.',
                        'No new author data were collected by this software.']}
     report['checker_source_provenance'] = metadata['source_provenance']
     for condition in CONDITIONS:
+        if not any(e['condition']==condition for e in metadata['items'].values()):
+            report['conditions'][condition]={'status':'checker_metadata_unavailable','methods':None}
+            continue
         entries = [(iid,e) for iid,e in sorted(private['items'].items()) if e['condition'] == condition]
         if coverage[condition]['identical_output_joint_conflicts']:
             report['conditions'][condition] = {'status': 'withheld_identical_output_conflict', 'methods': None}
@@ -223,8 +304,9 @@ def analyze(public, private, roster, exports, metadata, package_lock_sha):
                 value = metrics(rows)
                 value['case_count'] = len(selected)
                 value['photo_count'] = len({e['photo_id'] for _,e in selected})
-                value['generation_calls'] = {'total':sum(calls),'mean_per_case':sum(calls)/len(calls),
-                                            'not_multiplied_by_authors': True}
+                known=all(c is not None for c in calls)
+                value['generation_calls'] = {'total':sum(calls) if known else None,'mean_per_case':sum(calls)/len(calls) if known else None,
+                                            'unknown_cases':sum(c is None for c in calls),'not_multiplied_by_authors': True}
                 output[task or 'overall'] = value
             result[method] = output
         report['conditions'][condition] = {'status': 'computed_with_explicit_missingness', 'methods': result}
@@ -233,10 +315,12 @@ def analyze(public, private, roster, exports, metadata, package_lock_sha):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('extract', 'analyze'))
+    parser.add_argument('command', choices=('extract', 'extract-e3', 'analyze'))
     parser.add_argument('--data-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--run-root', type=Path)
+    parser.add_argument('--e3-lock', type=Path)
+    parser.add_argument('--e3-lock-sha256', help='Independently retained SHA256 of the E3 snapshot.')
     parser.add_argument('--metadata', type=Path)
     parser.add_argument('--metadata-sha256', help='SHA256 printed by the earlier extract command; required for analysis.')
     parser.add_argument('--roster', type=Path)
@@ -252,6 +336,9 @@ def main(argv=None):
         if args.command == 'extract':
             require(args.run_root is not None, 'extract requires --run-root.')
             report = extract_metadata(args.run_root, public, private, package_sha)
+        elif args.command == 'extract-e3':
+            require(args.e3_lock is not None,'extract-e3 requires --e3-lock.')
+            report=extract_e3_snapshot(args.e3_lock,args.e3_lock_sha256,public,private,package_sha)
         else:
             require(args.metadata is not None and args.roster is not None, 'analyze requires --metadata and --roster.')
             metadata, metadata_sha = read_snapshot(args.metadata); roster, roster_sha = read_snapshot(args.roster)

@@ -8,7 +8,7 @@
 - [x] Complete E4 fixed recolouring stress control on all 14 rice cases.
 - [x] Integrate results into the reviewed four-page report, retaining uncertainty and evidence limits.
 - [x] Prepare the author comparison and exact-output checker/author join tools with synthetic tests.
-- [ ] Confirm two remaining author names, four matriculation numbers and final author order in the private report. Do not infer these from account names.
+- [x] The owner confirmed all five author names and their order; the live private report was updated and checked in four pages. Matriculation numbers are not required and must not be requested. The repository report deliberately retains sanitized author placeholders.
 - [ ] Confirm cross-course reuse permission/disclosure and any page-limit ambiguity with the actual coursework requirements.
 - [ ] Check whether teammates already have relevant ratings or masks before repeating work.
 - [ ] Freeze the author/exposure roster before the first real rating, including exposure to method-labelled report or demo examples.
@@ -16,6 +16,7 @@
 - [ ] Collect per-output rubric ratings for the 34 primary revised-prompt pairs. Preserve missing/Unsure, ties, neither and original revisions.
 - [ ] Add ratings for 23 CLIP-selected outputs and one fixed-stopping output outside the existing pairs if those independent comparisons are included. Ratings transfer only for identical pixels, source and task.
 - [ ] Run photo-cluster comparative analysis and checker/author exact-hash joins on actual locked exports. Q3 remains unanswered until then.
+- [x] Recover the 34-case revised-condition checker metadata from the independently preserved E3 snapshot and bind all selected outputs to the frozen review package. This is checker-side preparation, not human evidence; original-condition metadata and full retry-cost trajectories are not supplied by this snapshot.
 - [ ] Resolve identical-output rating conflicts by documented author review without forcing, dropping or averaging away raw responses.
 - [ ] Obtain independent new-photo confirmation if an independent held-out claim is needed. The existing study cannot be relabelled held-out.
 - [ ] Recheck report claims, references, actual figure bytes, four-page limit and author block after all final changes.
@@ -23,7 +24,7 @@
 
 ## Isolated app extension
 
-Remote `app/senior-meal-preview` was verified at `e759d5564ad4d7a0718a325477e39b5bd2302f2a` on 10 November. The Mac worktree was previously dirty and is not available in the connected-environment list for this audit. Its latest uncommitted edits have not been synchronized or overwritten.
+Remote `app/senior-meal-preview` was last verified at `e759d5564ad4d7a0718a325477e39b5bd2302f2a`. A subsequent Mac inspection confirmed that the coursework checkout and linked app worktree share the same 42 coursework files, while the app adds 120 extension files. The separate design folder contains unique assets. Consolidation and host synchronization are separate operations; do not move or overwrite them based on this checklist. Fresh host comparison is required before applying code changes.
 
 - [ ] Review the isolated model-adapter package against the current app worktree before applying it. The existing bridge refers to the wrong editor/checker contracts; dry-run tests do not validate real inference.
 - [ ] Implement asynchronous job status/cancellation/error flows before real model serving; 25-second gateway and 28-second client timeouts are not suitable for the recorded longer retry cases.

@@ -1,0 +1,30 @@
+{
+  "verified_utc": "2026-11-10T05:40:11.095041+00:00",
+  "author_analysis_tests_passed": 24,
+  "sync_preflight_tests_passed": 5,
+  "compileall": "passed",
+  "full_repository_core_tests": "not rerun; full live repository unavailable",
+  "historical_archive_sha256": "c5ea52fb0d35a96eb47f070c94f92b52712aa39db13a060eab0168ea5279993d",
+  "historical_e3_lock_sha256": "dc389e33a3dfa0260b3c05ffe6ca56951e0f71739094ed19708d44eb644f212d",
+  "frozen_review_package_lock_sha256": "bc4cf1deccd0e1aa5483093789c00bf8a5385b30c496738ad2a01adfe56326f8",
+  "primary_checker_metadata_sha256": "c2899fd24ff9eb8c5c5076c0a30b0e945f3ac87a9162bb7f390a84be490630b9",
+  "recovered_cases": 34,
+  "source_photos": 20,
+  "selected_method_slots": 68,
+  "embedded_candidate_records": 149,
+  "same_checker_pass_counts": {
+    "best_check": 26,
+    "retry": 28
+  },
+  "human_responses_read": false,
+  "new_human_outcomes": false,
+  "new_inference": false,
+  "remote_files_changed": false,
+  "remote_sync_status": "not applied; strict Windows SSH denied before authentication on both hosts",
+  "peer_review": "two defensive-validation gaps fixed: prohibit numeric schema-2 retry cost; require historical snapshot receipt/date/coverage",
+  "limitations": [
+    "E3 pre-study snapshot is later than original inference, not proof of original inference-time immutability.",
+    "Original-prompt checker metadata and full retry trajectories absent.",
+    "Human evaluation remains pending; these checker counts are not human outcomes."
+  ]
+}

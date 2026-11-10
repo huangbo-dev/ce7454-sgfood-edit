@@ -1,0 +1,16 @@
+# Code-only publication allowlist. Private operational bundles stay outside Git.
+*
+!.gitignore
+!README.md
+!stage_spark.py
+!backend/
+!backend/server.py
+!backend/issue_credential.py
+!frontend/
+!frontend/app.js
+!frontend/index.html
+!frontend/style.css
+!tests/
+!tests/test_server.py
+!tests/test_staging.py
+!tests/test_portable_cli.py
