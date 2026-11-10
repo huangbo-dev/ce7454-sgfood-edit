@@ -63,7 +63,7 @@ python3 scripts/smoke.py
 1. **Execute the 5-Phase Rollout in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#4-next-week-rollout-schedule--cutover-runbook)**:
    - **Phase 0**: Run `./deploy/predeploy-check.sh`, generate `APP_API_TOKEN` and `MODEL_WORKER_TOKEN`, and apply `deploy/tailscale-acl.hujson`.
    - **Phase 1**: Bring up Tailscale (`tag:gpu-meal-worker` and `tag:ec2-meal-gateway`) and verify `WORKER_MODE=dry-run` across the `tailscale0` tunnel.
-   - **Phase 2**: Populate `/opt/senior-meal-preview/fixtures/<dish_id>/{input.png,mask_<change_id>.png}` on the GPU server (or set `WORKER_GPU_CMD`), switch to `WORKER_MODE=gpu`, and verify `/healthz` reports `"gpu_ready": true`.
+   - **Phase 2**: Populate `/opt/senior-meal-preview/fixtures/<dish_id>/{input.png,mask_rice.png}` (rice dishes only; see `docs/MODEL_INTEGRATION_PLAN.md`) on the GPU server (or set `WORKER_GPU_CMD`), switch to `WORKER_MODE=gpu`, and verify `/healthz` reports `"gpu_ready": true`.
    - **Phase 3**: Deploy the EC2 gateway + Caddy TLS (`./deploy/deploy-ec2.sh`) and run `dart run tool/smoke_api.dart https://<DOMAIN> --expect-gpu`.
    - **Phase 4**: Build and distribute the production Web/Android/iOS artifacts and run the 60-second GPU worker outage drill.
 2. **Native assistive-technology validation (`A11` in `docs/UI_ACCEPTANCE.md`)**:

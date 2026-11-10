@@ -132,7 +132,7 @@ class _MealFlowState extends State<MealFlow> {
         dishId: dish.id,
         changeIds: _changes.toList(),
         preferences: _preferences,
-        renderMode: _renderMode,
+        renderMode: _effectiveRenderMode,
       );
       if (!mounted || version != _requestVersion) return;
       if (result.dish.id != dish.id ||
@@ -336,7 +336,7 @@ class _MealFlowState extends State<MealFlow> {
               ? 'Preparing…'
               : _error != null
               ? 'Try again'
-              : _renderMode == 'gpu_assisted'
+              : _effectiveRenderMode == 'gpu_assisted'
               ? 'Generate preview'
               : _changes.isEmpty
               ? 'Choose a change'
@@ -567,9 +567,12 @@ class _MealFlowState extends State<MealFlow> {
       ),
       const SizedBox(height: 16),
       Text(
-        _renderMode == 'gpu_assisted'
+        _effectiveRenderMode == 'gpu_assisted'
             ? 'AI preview · Results are not clinically verified.'
+            : _renderMode == 'gpu_assisted'
+            ? 'AI preview covers one change (vegetables or brown rice) on a rice meal with no texture or flavour preference. This request will use Demo mode.'
             : 'Demo mode · Review your request without generating a photo.',
+        key: const Key('render-mode-note'),
         style: Theme.of(context).textTheme.bodyMedium,
       ),
       const SizedBox(height: 20),
@@ -580,13 +583,29 @@ class _MealFlowState extends State<MealFlow> {
     ];
   }
 
+  /// The model path is validated for one studied edit on a rice meal only.
+  /// The server enforces the same rule (`gpu_unsupported_selection`).
+  bool get _aiPreviewSupported =>
+      (_dish?.id == 'chicken_rice' || _dish?.id == 'tofu_rice') &&
+      _changes.length == 1 &&
+      (_changes.contains('extra_vegetables') ||
+          _changes.contains('brown_rice')) &&
+      _preferences.texture == 'any' &&
+      _preferences.flavour == 'any';
+
+  /// The mode actually sent: AI preview only when the selection supports it.
+  String get _effectiveRenderMode =>
+      _renderMode == 'gpu_assisted' && _aiPreviewSupported
+      ? 'gpu_assisted'
+      : 'illustrative_only';
+
   String get _preferenceSummary {
     final values = <String>[
       if (_preferences.texture != 'any') 'Soft texture',
       if (_preferences.flavour != 'any') 'Mild flavour',
     ];
     if (_catalog!.capabilities.gpuPreview) {
-      values.add(_renderMode == 'gpu_assisted' ? 'AI preview' : 'Demo');
+      values.add(_effectiveRenderMode == 'gpu_assisted' ? 'AI preview' : 'Demo');
     }
     return values.isEmpty ? 'Optional · No preference' : values.join(' · ');
   }

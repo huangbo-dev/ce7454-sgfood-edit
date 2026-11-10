@@ -10,10 +10,16 @@ Modes:
 - `dry-run`: Returns a deterministic, dependency-free PNG fixture labelled
   `provider="tailscale-gpu-dry-run"` and `model="dry_run_fixture"` for Tailscale
   connectivity and smoke tests.
-- `gpu`: Invokes either an external GPU runner (`WORKER_GPU_CMD`) or the repo's
-  `sgedit` BrushNet + Qwen2.5-VL check-and-retry pipeline against verified dish
-  fixtures in `WORKER_FIXTURE_DIR`. Fails closed with HTTP 503 if GPU fixtures or
-  weights are unavailable (never silently falls back to a synthetic dry-run image).
+- `gpu`: Invokes either an external GPU runner (`WORKER_GPU_CMD`) or the research
+  `sgedit` BrushNet + Qwen2.5-VL check-and-retry pipeline through `sgedit_adapter`,
+  against dish fixtures in `WORKER_FIXTURE_DIR`. The built-in path accepts only the two
+  studied edits (broccoli addition, brown-rice replacement), one per request, on rice
+  dishes with no texture/flavour preference; anything else gets HTTP 422. Fails closed
+  with HTTP 503 if fixtures, research code, weights or the checker are unavailable
+  (never silently falls back to a synthetic dry-run image).
+
+`--warm` runs the four supported jobs once and exits, so later requests are served from
+the on-disk candidate cache.
 """
 
 from __future__ import annotations
@@ -27,9 +33,12 @@ import ipaddress
 import json
 import os
 import shlex
+import socket
 import struct
 import subprocess
 import sys
+import threading
+import urllib.parse
 import zlib
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -48,12 +57,6 @@ PROMPT_MAP = {
     ("fish_soup", ("extra_vegetables",)): "t1b_fish_soup_greens",
 }
 
-CHANGE_TO_TASK = {
-    "extra_vegetables": ("T1b", "steamed broccoli", "broccoli"),
-    "brown_rice": ("T2", "brown rice", "rice"),
-    "sauce_on_side": ("T1b", "small saucer of light soy sauce on the side", "sauce"),
-}
-
 DISH_RGB = {
     "chicken_rice": (202, 129, 74),
     "fish_soup": (141, 188, 195),
@@ -66,8 +69,89 @@ GENERATED_DISCLOSURE = (
 )
 
 
+DEFAULT_CHECKER_URL = "http://127.0.0.1:8781"  # sgedit.checker serve --port 8781
+PREVIEW_MAX_SIDE = 768  # keeps the base64 PNG well under the backend's 4 MiB response limit
+
+
 class GpuPipelineUnreadyError(RuntimeError):
     """Raised when `--mode gpu` is active but GPU fixtures or weights are unavailable."""
+
+
+class GpuUnsupportedSelectionError(ValueError):
+    """Raised when the built-in model path is asked for anything but the two studied edits."""
+
+
+_ADAPTER = None
+_ADAPTER_INIT_LOCK = threading.Lock()
+_GPU_LOCK = threading.Lock()  # one generation at a time on the GPU
+
+
+def checker_url() -> str:
+    return os.environ.get("WORKER_CHECKER_URL", "").strip() or DEFAULT_CHECKER_URL
+
+
+def checker_reachable(timeout: float = 1.0) -> bool:
+    """True if something accepts TCP connections at the checker address."""
+    parts = urllib.parse.urlsplit(checker_url())
+    try:
+        with socket.create_connection((parts.hostname or "127.0.0.1", parts.port or 80), timeout=timeout):
+            return True
+    except (OSError, ValueError):
+        return False
+
+
+def candidate_dir(fixture_dir: str) -> str:
+    return os.environ.get("WORKER_OUT_DIR", "").strip() or str(Path(fixture_dir).parent / "candidates")
+
+
+def get_adapter():
+    """Load the research code and BrushNet model once; later calls reuse them."""
+    global _ADAPTER
+    with _ADAPTER_INIT_LOCK:
+        if _ADAPTER is not None:
+            return _ADAPTER
+        fixture_dir = os.environ.get("WORKER_FIXTURE_DIR", "").strip()
+        if not fixture_dir:
+            raise GpuPipelineUnreadyError(
+                "GPU mode requires WORKER_FIXTURE_DIR (dish input and rice-mask PNGs) or WORKER_GPU_CMD. "
+                "Refusing to return a synthetic dry-run fixture while in '--mode gpu'."
+            )
+        import sgedit_adapter
+
+        try:
+            _ADAPTER = sgedit_adapter.build_real_adapter(
+                fixture_dir, candidate_dir(fixture_dir), checker_url()
+            )
+        except sgedit_adapter.PipelineUnready as exc:
+            raise GpuPipelineUnreadyError(str(exc)) from exc
+        return _ADAPTER
+
+
+def png_data_url_from_file(path: str, max_side: int = PREVIEW_MAX_SIDE) -> str:
+    from PIL import Image
+
+    img = Image.open(path).convert("RGB")
+    if max(img.size) > max_side:
+        scale = max_side / max(img.size)
+        img = img.resize((round(img.width * scale), round(img.height * scale)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def artifact_from_evidence(evidence: dict[str, object]) -> dict[str, object]:
+    """Map adapter evidence onto the GpuArtifact schema the Rust backend validates."""
+    return {
+        "provider": "tailscale-gpu-worker",
+        "model": "brushnet-sdxl+qwen2.5-vl-7b-4bit",
+        "prompt_id": "{policy_version}:{task}:{source}:step{prompt_step}".format(**evidence),
+        "seed": int(evidence["seed"]),
+        "attempts": max(1, min(8, int(evidence["attempts"]))),
+        # Refers to the selected (best-scoring) image, as in sgedit.results schema 2.
+        "checker_passed": bool(evidence["selected_passed"]),
+        "image_data_url": png_data_url_from_file(str(evidence["image_path"])),
+        "generated_label": GENERATED_DISCLOSURE,
+    }
 
 
 def is_allowed_bind_ip(addr: str) -> bool:
@@ -117,15 +201,17 @@ def make_solid_png_data_url(rgb: tuple[int, int, int], width: int = 96, height: 
 
 
 def is_gpu_pipeline_ready() -> bool:
-    """Return True if either WORKER_GPU_CMD or WORKER_FIXTURE_DIR is configured and present."""
+    """True if WORKER_GPU_CMD is set, or the built-in path has its model loaded, its fixtures
+    present and a checker listening. Configuration alone is not readiness."""
     gpu_cmd = os.environ.get("WORKER_GPU_CMD", "").strip()
     if gpu_cmd:
         return True
     fixture_dir = os.environ.get("WORKER_FIXTURE_DIR", "").strip()
-    if not fixture_dir:
+    if not fixture_dir or _ADAPTER is None:
         return False
-    base = Path(fixture_dir)
-    return base.is_dir() and all((base / d / "input.png").is_file() for d in ALLOWED_DISHES)
+    import sgedit_adapter
+
+    return sgedit_adapter.fixtures_present(fixture_dir) and checker_reachable()
 
 
 def build_dry_run_artifact(
@@ -200,81 +286,28 @@ def run_gpu_pipeline(
             "generated_label": str(result.get("generated_label", GENERATED_DISCLOSURE)),
         }
 
-    fixture_dir = os.environ.get("WORKER_FIXTURE_DIR", "").strip()
-    if not fixture_dir:
-        raise GpuPipelineUnreadyError(
-            "GPU mode requires WORKER_FIXTURE_DIR (pointing to dish input/mask PNGs) or WORKER_GPU_CMD. "
-            "Refusing to return a synthetic dry-run fixture while in '--mode gpu'."
-        )
+    import sgedit_adapter
 
-    dish_dir = Path(fixture_dir) / dish_id
-    input_path = dish_dir / "input.png"
-    if not input_path.is_file():
-        raise GpuPipelineUnreadyError(f"Missing dish base fixture: {input_path}")
-
+    # Refuse unsupported requests before touching the model.
     try:
-        from PIL import Image
-        from sgedit.editor import BrushNetEditor, EditSpec
-        from sgedit.loop import POLICY, CheckerClient, base_spec, next_spec
-        from sgedit.prompts import ladder
-    except Exception as exc:
-        raise GpuPipelineUnreadyError(
-            f"Cannot import sgedit GPU pipeline dependencies: {exc}"
-        ) from exc
+        sgedit_adapter.resolve_task(dish_id, change_ids, texture, flavour)
+    except sgedit_adapter.UnsupportedRequest as exc:
+        raise GpuUnsupportedSelectionError(str(exc)) from exc
 
+    adapter = get_adapter()
     try:
-        editor = BrushNetEditor()
-        checker_url = os.environ.get("WORKER_CHECKER_URL", "http://127.0.0.1:8000/v1")
-        checker = CheckerClient(base_url=checker_url)
-        current_img = Image.open(input_path).convert("RGB")
-        total_attempts = 0
-        all_passed = True
-
-        for cid in change_ids:
-            mask_path = dish_dir / f"mask_{cid}.png"
-            if not mask_path.is_file():
-                raise GpuPipelineUnreadyError(f"Missing change mask fixture: {mask_path}")
-            mask_img = Image.open(mask_path).convert("L")
-            task, target, source = CHANGE_TO_TASK[cid]
-            prompts = ladder(task, target, source)
-            row = {"task": task, "target": target, "source": source}
-            spec: EditSpec = base_spec(task, prompts, seed)
-            policy = POLICY[task]
-            passed = False
-
-            for k in range(1, 5):
-                total_attempts = min(8, total_attempts + 1)
-                candidate = editor.edit(current_img, mask_img, spec)
-                res = checker.Check(candidate, mask_img, row, k)
-                if res.accept:
-                    current_img = candidate
-                    passed = True
-                    break
-                nxt = next_spec(spec, res.failure_mode, prompts, policy)
-                if nxt is None:
-                    current_img = candidate
-                    break
-                spec = nxt
-
-            all_passed = all_passed and passed
-
-        buf = io.BytesIO()
-        current_img.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-        return {
-            "provider": "tailscale-gpu-worker",
-            "model": "brushnet-sdxl+qwen2.5-vl-7b-4bit",
-            "prompt_id": prompt_id,
-            "seed": seed,
-            "attempts": max(1, min(8, total_attempts)),
-            "checker_passed": all_passed,
-            "image_data_url": f"data:image/png;base64,{b64}",
-            "generated_label": GENERATED_DISCLOSURE,
-        }
-    except GpuPipelineUnreadyError:
-        raise
+        with _GPU_LOCK:
+            evidence = adapter.run(dish_id, change_ids, texture, flavour)
+        artifact = artifact_from_evidence(evidence)
+    except sgedit_adapter.PipelineUnready as exc:
+        raise GpuPipelineUnreadyError(str(exc)) from exc
     except Exception as exc:
         raise GpuPipelineUnreadyError(f"sgedit GPU execution failed: {exc}") from exc
+    sys.stderr.write(
+        "[gpu-worker] job={job_key} task={task} attempts={attempts} selected={selected_tag} "
+        "passed={selected_passed} image_sha256={image_sha256}\n".format(**evidence)
+    )
+    return artifact
 
 
 class WorkerHandler(BaseHTTPRequestHandler):
@@ -374,6 +407,12 @@ class WorkerHandler(BaseHTTPRequestHandler):
                 prompt_id=prompt_id,
                 seed=seed,
             )
+        except GpuUnsupportedSelectionError as exc:
+            self._send_json(
+                HTTPStatus.UNPROCESSABLE_ENTITY,
+                {"error": "gpu_unsupported_selection", "message": str(exc)},
+            )
+            return
         except GpuPipelineUnreadyError as exc:
             self._send_json(
                 HTTPStatus.SERVICE_UNAVAILABLE,
@@ -403,7 +442,27 @@ def main() -> None:
         default=os.environ.get("WORKER_MODE", "dry-run"),
         help="Execution mode (default: dry-run).",
     )
+    parser.add_argument(
+        "--warm",
+        action="store_true",
+        help="Run the four supported sgedit jobs once (filling the candidate cache), print the "
+        "evidence as JSON and exit. Needs the GPU, the fixtures and a running checker.",
+    )
     args = parser.parse_args()
+
+    if args.warm:
+        import sgedit_adapter
+
+        try:
+            adapter = get_adapter()
+        except GpuPipelineUnreadyError as exc:
+            raise SystemExit(f"Cannot warm the cache: {exc}") from exc
+        report = []
+        for dish in sgedit_adapter.RICE_DISHES:
+            for change in sgedit_adapter.SUPPORTED_CHANGES:
+                report.append(adapter.run(dish, [change]))
+        print(json.dumps(report, indent=1))
+        return
 
     bind_addr = args.bind.strip() or detect_tailscale_ipv4()
     if not is_allowed_bind_ip(bind_addr):
@@ -418,6 +477,12 @@ def main() -> None:
 
     WorkerHandler.expected_token = token
     WorkerHandler.mode = args.mode
+    if args.mode == "gpu" and not os.environ.get("WORKER_GPU_CMD", "").strip():
+        # Load the model before serving so the first request does not pay for it.
+        try:
+            get_adapter()
+        except GpuPipelineUnreadyError as exc:
+            print(f"GPU pipeline not ready; requests will get HTTP 503: {exc}", flush=True)
     server = ThreadingHTTPServer((bind_addr, args.port), WorkerHandler)
     print(
         f"Tailscale GPU worker listening on http://{bind_addr}:{args.port} (mode={args.mode})",

@@ -398,6 +398,19 @@ pub fn make_preview(request: PreviewRequest) -> Result<Preview, ApiError> {
     })
 }
 
+/// The model path is validated only for the two studied research edits (broccoli addition and
+/// brown-rice replacement), one per request, on a rice meal with no texture or flavour preference.
+/// Everything else stays on the symbolic illustration.
+fn gpu_supported_selection(request: &WorkerGenerateRequest) -> bool {
+    let rice_dish = matches!(request.dish_id.as_str(), "chicken_rice" | "tofu_rice");
+    let studied_edit = match request.change_ids.as_slice() {
+        [change] => matches!(change.as_str(), "extra_vegetables" | "brown_rice"),
+        _ => false,
+    };
+    let no_preferences = request.texture == Texture::Any && request.flavour == Flavour::Any;
+    rice_dish && studied_edit && no_preferences
+}
+
 async fn preview(
     State(config): State<Arc<RuntimeConfig>>,
     body: Result<Json<PreviewRequest>, JsonRejection>,
@@ -441,6 +454,13 @@ async fn preview(
                 "The Tailscale GPU model worker is not configured on this server. Switch to symbolic illustration or start the worker.",
             ));
         };
+        if !gpu_supported_selection(&worker_req) {
+            return Err(ApiError::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "gpu_unsupported_selection",
+                "AI preview supports one change only (add vegetables or brown rice) on a rice meal, with no texture or flavour preference. Use the demo summary for other requests.",
+            ));
+        }
         let artifact = worker::request_gpu_preview(worker_cfg, &worker_req)
             .await
             .map_err(|failure| match failure {

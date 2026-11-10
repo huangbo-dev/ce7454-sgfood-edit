@@ -10,6 +10,12 @@ Source inspection of `gpu-worker/gpu_worker.py` against this checkout's `sgedit/
 
 Texture/flavour values are passed into the worker interface but not used by the built-in editing loop. Sauce-on-side is not one of the two tasks in the research evaluation rubric. Multiple edits are sequential and need final-image preservation checks; passing each step alone would not establish that earlier changes survived. Worker configuration being present is not proof of model readiness.
 
+## Adapter status (2026-11-10, later the same day)
+
+The incompatible built-in path was replaced by `gpu-worker/sgedit_adapter.py`, which calls the research `sgedit.loop` (`Runner.candidate`, `base_spec`, `next_spec`, `POLICY`) unchanged and repeats only its check-and-retry arm. The model path now accepts one studied edit (`extra_vegetables` → T1-B, `brown_rice` → T2) on `chicken_rice` or `tofu_rice` with no texture/flavour preference; the worker answers anything else with HTTP 422, the Rust API with `gpu_unsupported_selection`, and the app sends such requests in Demo mode with a visible reason.
+
+Verified: `gpu-worker/test_sgedit_adapter.py` runs the adapter against the real `sgedit/loop.py` with a fake editor and checker (no GPU). **Not verified:** real BrushNet/Qwen inference, the fixtures (which photos and rice masks to use is undecided), and the Rust and Flutter changes, which were written without a toolchain and still need `scripts/check.sh`. The GPU acceptance gate is `gpu_worker.py --mode gpu --warm` on the GPU machine with the checker running. Steps 3–7 below are unchanged and still open.
+
 ## Concrete implementation sequence
 
 1. Start with the two supported research requests only: add cooked broccoli while retaining the staple; replace white rice with brown rice. Keep sauce, softness and mildness out of the validated-model flow until methods and independent evaluation exist. They may remain explicitly labelled exploratory requests elsewhere.

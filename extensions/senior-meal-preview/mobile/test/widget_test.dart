@@ -639,6 +639,25 @@ void main() {
       );
     },
   );
+  testWidgets(
+    'AI preview falls back to demo mode, with a reason, outside the studied edits',
+    (tester) async {
+      final api = FakeApi()..gpuPreviewEnabled = true;
+      await tester.pumpWidget(MealPreviewApp(api: api));
+      await tester.pumpAndSettle();
+      await selectMeal(tester);
+      await tapKey(tester, 'change-sauce_on_side');
+      await tapKey(tester, 'render-gpu');
+      await tapKey(tester, 'preferences-done');
+
+      expect(find.textContaining('This request will use Demo mode'), findsOneWidget);
+      await tapKey(tester, 'submit');
+
+      expect(api.sentRenderMode, 'illustrative_only');
+      expect(find.byKey(const Key('gpu-preview-card')), findsNothing);
+    },
+  );
+
   testWidgets('compact catalog shows all three meals on a phone', (
     tester,
   ) async {

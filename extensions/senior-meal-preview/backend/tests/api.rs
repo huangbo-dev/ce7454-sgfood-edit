@@ -504,7 +504,8 @@ async fn gpu_assisted_mode_bridges_to_authenticated_worker_and_validates_artifac
     let catalog_val: Value = serde_json::from_slice(&catalog_bytes).unwrap();
     assert_eq!(catalog_val["capabilities"]["gpu_preview"], true);
 
-    let mut body = request();
+    // Only the studied single edits are forwarded to the model worker.
+    let mut body = json!({"dish_id":"chicken_rice","change_ids":["brown_rice"]});
     body["render_mode"] = json!("gpu_assisted");
     let response = app
         .oneshot(
@@ -524,6 +525,50 @@ async fn gpu_assisted_mode_bridges_to_authenticated_worker_and_validates_artifac
     assert_eq!(value["gpu_artifact"]["attempts"], 2);
     assert_eq!(value["gpu_artifact"]["checker_passed"], true);
     server_task.await.unwrap();
+}
+
+#[tokio::test]
+async fn gpu_assisted_mode_rejects_selections_outside_the_studied_edits() {
+    use senior_meal_preview::{RuntimeConfig, worker::GpuWorkerConfig};
+
+    // Nothing listens on this port: a rejected request must never reach the worker.
+    let worker_cfg = GpuWorkerConfig::new(
+        "http://127.0.0.1:9",
+        None,
+        std::time::Duration::from_secs(1),
+        1,
+    )
+    .unwrap();
+    let app = senior_meal_preview::app_with_config(RuntimeConfig {
+        gpu_worker: Some(worker_cfg),
+        ..RuntimeConfig::default()
+    });
+
+    for mut body in [
+        json!({"dish_id":"chicken_rice","change_ids":["sauce_on_side"]}),
+        json!({"dish_id":"fish_soup","change_ids":["extra_vegetables"]}),
+        json!({"dish_id":"chicken_rice","change_ids":["brown_rice","extra_vegetables"]}),
+        json!({"dish_id":"chicken_rice","change_ids":["brown_rice"],"preferences":{"texture":"soft"}}),
+        json!({"dish_id":"tofu_rice","change_ids":["brown_rice"],"preferences":{"flavour":"mild"}}),
+    ] {
+        body["render_mode"] = json!("gpu_assisted");
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/preview")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(body.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let value: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(value["error"]["code"], "gpu_unsupported_selection");
+    }
 }
 
 #[tokio::test]
