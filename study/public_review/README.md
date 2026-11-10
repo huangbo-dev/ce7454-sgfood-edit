@@ -67,14 +67,16 @@ limits are intended for a small pilot, not enterprise denial-of-service defense.
 Runtime data, roster and database must be kept in an approved private directory
 outside this checkout. POSIX runtime checks require private directory mode 0700
 and credential/database file mode 0600. Windows ACL isolation has not been
-validated. Issuance is a separately authorized operational action; the helper
-requires an explicit approval flag, refuses an existing roster, and prints the
-new code once. Never retain that output in shared logs or Git.
+validated. Issuance is a separately authorized operational action. The legacy
+single-reviewer `backend/issue_credential.py` helper requires an explicit
+approval flag, refuses an existing roster, and prints the new code once. Never
+retain that output in shared logs or Git. The multi-reviewer helper below does
+not print credentials.
 
-Public TLS proxy configuration, roster approval, secure code distribution and
-real proxy end-to-end checks remain separate activation prerequisites. No
-proxy, firewall, service, host credentials or security settings were changed by
-this publication. This review is not a security certification.
+Deployment, roster approval and secure code distribution are separately
+authorized operational actions. No proxy, firewall, service, host credentials
+or security settings were changed by this code publication. This review is not
+a security certification. The later operational verification is recorded below.
 
 ## Running software checks
 
@@ -103,7 +105,12 @@ Before code publication, the immutable private Spark stage passed 13 synthetic
 server/staging tests, the JavaScript syntax check, 10 code hashes and 83 data
 hashes. Separate Windows synthetic browser checks passed login, save, logout
 and re-login on desktop/mobile layouts. These checks did not collect human
-ratings. The public TLS reverse-proxy end-to-end check remains pending.
+ratings. At that stage, the public TLS reverse-proxy check was still pending.
+A subsequent, separately authorized operational deployment verified public TLS
+access and login with HTTP 200, and rejection of anonymous protected requests
+with HTTP 401. This does not establish byte identity with the portable CLI
+copies or constitute new human evaluation. No deployment hostname, private
+owner-file location or actual reviewer credential metadata is published here.
 
 The exact six-file research overlay was also applied to isolated GPU04 and
 Spark copies, each passing 24 author-analysis and 5 sync-preflight tests. Its
@@ -120,3 +127,40 @@ syntax (Node.js 26.3.0), changed-Python AST parsing and Git whitespace checks
 passed. The staging test used a canonical temporary path on macOS; its symlink
 rejection was not relaxed. No GPU/model inference or production credentials
 were used. No GitHub Actions workflows are configured in the repository.
+
+
+## Offline multi-reviewer issuance helper
+
+`issue_reviewers.py` prepares a new, email-mapped roster for specifically
+approved project authors. It performs no networking, installation, distribution
+or modification of an existing application roster. Publishing or testing this
+helper does not authorize issuing operational credentials.
+
+The helper requires an approved plan, an explicit new output directory and the
+`--confirm-specific-issuance-approved` flag. Reviewer IDs and institutional
+email addresses must be unique; only the approved institutional email domain
+is accepted, and expiry must be within the next 30 days. It runs on POSIX only,
+rejects symlinks and group/world-writable parents, and refuses an existing
+output directory. It creates a new mode-0700 directory and mode-0600 files.
+The installable roster contains hashes and reviewer IDs, not emails or raw
+codes. The separate owner-only mapping contains the email/code association and
+must stay private. No credentials are printed. Partial output is explicitly
+unapproved for installation and is not silently deleted.
+
+Only the reviewed source and its nine synthetic tests are included. No actual
+plan, email list, owner mapping, operational codes or roster is included or read
+by these tests. Test addresses and deterministic codes are invented fixtures.
+
+Source SHA-256:
+`967df4762460f184776788eab0e0e8af61741586c4c16ccbe881b078d2d0771c`.
+Synthetic test SHA-256:
+`8cb4a8c2426bb3eb1359690209ea4505bdd8cd33596609f921093ca051350c63`.
+Both files preserve the reviewed source bytes unchanged.
+
+After this code-only addition, all 28 portal tests passed on macOS/Python 3.13.5,
+including the nine issuance tests. An additional unmocked POSIX smoke check
+verified the new directory/file permissions, hash-only roster, silent output and
+overwrite refusal using deterministic fake codes in a disposable directory.
+JavaScript syntax, new-Python parsing and staged whitespace/privacy checks also
+passed. Neither the immutable operational package nor actual issuance files were
+read or changed for this addition.

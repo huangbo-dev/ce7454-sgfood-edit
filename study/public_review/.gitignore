@@ -3,6 +3,7 @@
 !.gitignore
 !README.md
 !stage_spark.py
+!issue_reviewers.py
 !backend/
 !backend/server.py
 !backend/issue_credential.py
@@ -14,3 +15,4 @@
 !tests/test_server.py
 !tests/test_staging.py
 !tests/test_portable_cli.py
+!tests/test_issue_reviewers.py
