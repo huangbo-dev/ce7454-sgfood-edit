@@ -1,0 +1,100 @@
+{
+  "remote_artifacts": [
+    "compare.py",
+    "LOCK.json",
+    "cases.jsonl",
+    "COMPLETE.json",
+    "verify_pairs.py"
+  ],
+  "cohort": {
+    "prompt_condition": "revised",
+    "photos": 20,
+    "edit_cases": 34,
+    "first_attempt_passes": 20
+  },
+  "comparison": "After a failed check, always take the frozen edit-escalation step versus selecting settings from the checker's failure label. Both arms stop at first pass or four attempts and select the first maximum checker score among attempts.",
+  "endpoint": "Selected image passes all thresholds of the same Qwen checker used in both arms.",
+  "results": [
+    {
+      "task": "all",
+      "cases": 34,
+      "adaptive_pass": 28,
+      "fixed_ladder_pass": 29,
+      "adaptive_attempts": 68,
+      "fixed_ladder_attempts": 67
+    },
+    {
+      "task": "T1-B",
+      "cases": 20,
+      "adaptive_pass": 17,
+      "fixed_ladder_pass": 17,
+      "adaptive_attempts": 43,
+      "fixed_ladder_attempts": 43
+    },
+    {
+      "task": "T2",
+      "cases": 14,
+      "adaptive_pass": 11,
+      "fixed_ladder_pass": 12,
+      "adaptive_attempts": 25,
+      "fixed_ladder_attempts": 24
+    }
+  ],
+  "paired": {
+    "both_pass": 28,
+    "adaptive_only": 0,
+    "fixed_ladder_only": 1,
+    "neither": 5,
+    "identical_selected_images": 30,
+    "cases_with_different_retry_settings": 4
+  },
+  "difference_adaptive_minus_ladder": {
+    "estimate": -0.029411764705882353,
+    "percentile_95_interval": [
+      -0.09090909090909091,
+      0
+    ],
+    "resampling_unit": "photo, carrying all edit tasks",
+    "replicates": 10000,
+    "seed": 20261108
+  },
+  "fixed_ladder_attempt_sources": {
+    "exact_archived_matches": 58,
+    "newly_generated_and_checked": 9
+  },
+  "interpretation": "Exploratory checker-based result on the shared-photo cohort. Both arms used checker stopping and ranking. No independent human ratings.",
+  "run_id": "fixed_ladder_tuned_20261111_4mBh2W",
+  "archive_parent": "shared_hawker_20261108_k4/tuned",
+  "fixed_prompt_stopping_replay": {
+    "columns": [
+      "cases",
+      "selected_passes",
+      "generation_attempts"
+    ],
+    "original": {
+      "T1-B": [
+        20,
+        14,
+        45
+      ],
+      "T2": [
+        14,
+        1,
+        54
+      ]
+    },
+    "revised": {
+      "T1-B": [
+        20,
+        14,
+        45
+      ],
+      "T2": [
+        14,
+        12,
+        23
+      ]
+    },
+    "method": "Read each archived seed_tags list in order until the first pass or seed exhaustion. Take the first candidate with maximum score in that prefix and count its pass flag."
+  }
+}

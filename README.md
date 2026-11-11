@@ -2,11 +2,15 @@
 
 Check-and-retry editing of Singaporean meal photographs, CE7454 Project 2.
 
-## Current status: 10 November 2026
+## Report handover · 11 November 2026
+
+Start with the [rubric review and next actions](plan/REPORT_HANDOVER_20261111.md) and the [fixed-ladder results](evidence/fixed-ladder-20261111/SUMMARY.json). The fixed ladder returned 29/34 checker passes in 67 attempts. Adaptive retry returned 28/34 in 68. The live Overleaf draft still needs this comparison and currently renders to five pages including references.
+
+## Research snapshot · 10 November 2026
 
 The shared-photo retrospective study and supplemental CLIP/recolouring controls are complete. Human ratings, independent new-photo confirmation and final submission checks remain open. The report is a reviewed draft, not a submitted or submission-ready report.
 
-This research snapshot includes the selected-output reporting fix, frozen study runner, latest report text, offline author-analysis tools and aggregate supplemental receipts. The optional meal-preview app remains isolated on `app/senior-meal-preview`; it is not part of the research submission or evidence of model deployment.
+This research snapshot includes the selected-output reporting fix, frozen study runner, 10 November report text, offline author-analysis tools and aggregate supplemental receipts. The optional meal-preview app remains isolated on `app/senior-meal-preview`; it is not part of the research submission or evidence of model deployment.
 
 ### Verified checker diagnostics
 
