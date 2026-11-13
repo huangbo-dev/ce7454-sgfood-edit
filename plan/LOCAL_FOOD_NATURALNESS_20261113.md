@@ -82,3 +82,4 @@ App fallback: reject or label uncertain results, offer another placement/photo, 
 
 This commit is a proposed solution and experiment design, not a model fix already proven, a deployment, a fine-tune, or authorization to launch GPU jobs. No frozen source/results were edited.
 
+See [data/reference collection brief](LOCAL_FOOD_DATA_BRIEF_20261113.md) for upload fields, approximate acquisition budgets and training safeguards.
