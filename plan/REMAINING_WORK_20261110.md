@@ -15,6 +15,7 @@
 - [ ] Obtain any required authorization for the private review route and individual access. Do not commit access codes or activate a public route by default.
 - [ ] Collect per-output rubric ratings for the 34 primary revised-prompt pairs. Preserve missing/Unsure, ties, neither and original revisions.
 - [ ] Add ratings for 23 CLIP-selected outputs and one fixed-stopping output outside the existing pairs if those independent comparisons are included. Ratings transfer only for identical pixels, source and task.
+- [x] 11 Nov: analyzer for the live categorical portal format (three Yes/No/Unsure questions, 34 pairs) added under `study/categorical_analysis/` with synthetic tests, before any response existed. The numeric `study/author_analysis` tools do not read this format. The repository report's protocol paragraph now describes the categorical questions; mirror it in the private Overleaf report.
 - [ ] Run photo-cluster comparative analysis and checker/author exact-hash joins on actual locked exports. Q3 remains unanswered until then.
 - [x] Recover the 34-case revised-condition checker metadata from the independently preserved E3 snapshot and bind all selected outputs to the frozen review package. This is checker-side preparation, not human evidence; original-condition metadata and full retry-cost trajectories are not supplied by this snapshot.
 - [ ] Resolve identical-output rating conflicts by documented author review without forcing, dropping or averaging away raw responses.
