@@ -1,0 +1,26 @@
+{
+  "status": "proposal_not_executable",
+  "version": "local-food-naturalness-dev-v1",
+  "frozen_study_mutation_allowed": false,
+  "new_outputs_expected": 48,
+  "cases": {"vegetables": 6, "brown_rice": 6},
+  "seeds": [1107, 2207],
+  "conditions": ["same_target_control", "layout_or_structure_intervention"],
+  "required_before_execution": [
+    "case_registry_with_source_photo_group_ids_and_split",
+    "explicit_task_intent_and_same_target_in_both_arms",
+    "input_allowed_mask_protected_mask_sha256",
+    "generator_adapter_checkpoint_configuration_hashes",
+    "compatible_model_and_memory_preflight",
+    "blinded_rubric_and_analysis_lock",
+    "separate_run_directory_and_execution_authorization"
+  ],
+  "must_not": [
+    "replace_frozen_outputs_or_human_review_package",
+    "call_a_new_side_vegetable_task_an_improvement_on_original_T1_B",
+    "use_same_tuning_checker_as_independent_validation",
+    "claim_existing_inspected_photos_are_held_out",
+    "treat_seeds_as_independent_photos",
+    "claim_health_improvement_from_generated_pixels"
+  ]
+}
