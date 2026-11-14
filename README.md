@@ -2,15 +2,23 @@
 
 Check-and-retry editing of Singaporean meal photographs, CE7454 Project 2.
 
+## Current handover · 14 November 2026
+
+The current report is maintained in Overleaf; `report/` is an older, sanitized research snapshot and is not the submission version. The live report compiles to four pages and includes the fixed ladder, whole-image baseline, outside-mask pixel metrics, SAM3 citation and author ratings. As of 14 November 00:18 SGT, four authors had rated all 34 cases and a fifth had rated six. Table 3 uses the four complete reviewers; the raw ratings and mappings remain private. A new check is needed if further ratings arrive.
+
+The fixed ladder and adaptive policy produced identical selected images in 30/34 cases. Their checker pass counts were 29/34 and 28/34 respectively; this provides little evidence that failure-specific feedback improves the result. Author plausibility ratings favored best-of-four over adaptive retry on both tasks. These are author judgments on a small, retrospective cohort, not independent evidence of clinical benefit or nutrition.
+
+The optional app source is now in `extensions/senior-meal-preview/`; its presence here does not establish a working deployment. Before submission, confirm the presentation video, team details and any instructor rules on course reuse; validate the final Overleaf PDF and submit both required deliverables. An independent test on unseen meals, independent raters and validation of any fine-tuning remain future work.
+
 ## Report handover · 11 November 2026
 
-Start with the [rubric review and next actions](plan/REPORT_HANDOVER_20261111.md) and the [fixed-ladder results](evidence/fixed-ladder-20261111/SUMMARY.json). The fixed ladder returned 29/34 checker passes in 67 attempts. Adaptive retry returned 28/34 in 68. The live Overleaf draft still needs this comparison and currently renders to five pages including references.
+The [rubric review and next actions](plan/REPORT_HANDOVER_20261111.md) is a historical handover. See the [fixed-ladder results](evidence/fixed-ladder-20261111/SUMMARY.json) and the current handover above for later report and review status.
 
 ## Research snapshot · 10 November 2026
 
-The shared-photo retrospective study and supplemental CLIP/recolouring controls are complete. Human ratings, independent new-photo confirmation and final submission checks remain open. The report is a reviewed draft, not a submitted or submission-ready report.
+The shared-photo retrospective study and supplemental CLIP/recolouring controls are complete. Independent new-photo confirmation and final submission checks remain open. The report is a draft, not a submitted report.
 
-This research snapshot includes the selected-output reporting fix, frozen study runner, 10 November report text, offline author-analysis tools and aggregate supplemental receipts. The optional meal-preview app remains isolated on `app/senior-meal-preview`; it is not part of the research submission or evidence of model deployment.
+This research snapshot includes the selected-output reporting fix, frozen study runner, 10 November report text, offline author-analysis tools and aggregate supplemental receipts. The optional meal-preview app is not part of the research submission or evidence of model deployment.
 
 ### Verified checker diagnostics
 
@@ -24,7 +32,7 @@ For revised prompts, on 20 photos and 34 tasks:
 
 These are selected-output verdicts from the same Qwen checker that selects the checker-based methods. They do not establish independent visual-quality superiority. The retry-minus-best difference is +5.88 percentage points, with exploratory photo-cluster 95% interval [-5.71, 17.14]. The task effects have opposite signs.
 
-Fixed-prompt early stopping also gives 26/34 using 68 generations, the same aggregate generation count as adaptive retry. CLIP uses full-image target-text cosine, not target-minus-source margin. The fixed HSV stress control passes 0/14; rejection of one recipe does not establish general checker specificity or human false acceptance. The reviewed report records no real human ratings as of 09:02 SGT on 10 November; this sync did not read the response database or collect ratings.
+Fixed-prompt early stopping also gives 26/34 using 68 generations, the same aggregate generation count as adaptive retry. CLIP uses full-image target-text cosine, not target-minus-source margin. The fixed HSV stress control passes 0/14; rejection of one recipe does not establish general checker specificity or human false acceptance. The 10 November snapshot predates the author ratings described above.
 
 See [aggregate results](evidence/supplemental-20261110/SUMMARY.json), [method details](evaluate/supplemental/README.md), [report source](report/main.tex), and [remaining work](plan/REMAINING_WORK_20261110.md).
 
