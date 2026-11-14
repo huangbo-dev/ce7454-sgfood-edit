@@ -11,3 +11,5 @@ Verified locally: the reference images display, an unreachable worker yields an 
 ## Reconnected test result
 
 The interrupted browser request produced two real candidates in 13.41 and 12.18 seconds. Both failed the selector's edit criterion; the first was selected by score. The connection closed before the worker could deliver its response. A subsequent independent API request completed HTTP 200 in 24.58 seconds with two attempts and `checker_passed=false`. Visual inspection showed conspicuous pasted patches instead of brown rice in both candidates; the manual mask/source needs improvement and the fixture must not be promoted as a production-quality example. The live catalog returned both fixture IDs while the test worker was running and no ready dishes after it was stopped. These are development observations, not benchmark outcomes.
+
+A final browser-to-gateway-to-worker run completed and displayed the selected candidate. It visibly contained the same unrealistic patch, so transport success must not be confused with edit success. Both isolated processes and the temporary forwarding rule were stopped after testing; the existing services were left running.
