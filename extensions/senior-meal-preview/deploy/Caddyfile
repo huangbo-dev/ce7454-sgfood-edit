@@ -1,0 +1,26 @@
+# Caddy HTTPS reverse proxy. Set DOMAIN to the chosen hostname before starting.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	@api path /healthz /api/v1/*
+	handle @api {
+		request_body {
+			max_size 16KB
+		}
+		reverse_proxy 127.0.0.1:8787
+	}
+
+	handle {
+		root * /var/www/senior-meal-preview
+		try_files {path} /index.html
+		file_server
+	}
+}
