@@ -10,6 +10,16 @@ import 'package:senior_meal_preview/models.dart';
 import 'fixtures.dart';
 
 void main() {
+  test('per-dish readiness restricts AI previews', () {
+    final c = CatalogCapabilities.fromJson({
+      'symbolic_preview': true,
+      'gpu_preview': true,
+      'gpu_ready_dishes': ['chicken_rice'],
+    });
+    expect(c.supportsDish('chicken_rice'), isTrue);
+    expect(c.supportsDish('tofu_rice'), isFalse);
+  });
+
   test('web defaults to page origin without retaining route or query', () {
     expect(
       resolveApiBaseUrl(

@@ -168,7 +168,7 @@ void main() {
         .widget<SelectableText>(find.byType(SelectableText))
         .data!;
     expect(text, contains('Misaochan'));
-    expect(text, contains('PaulMondal'));
+    expect(text, contains('Walter Lim'));
     expect(text, contains('https://creativecommons.org/licenses/'));
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
@@ -650,7 +650,10 @@ void main() {
       await tapKey(tester, 'render-gpu');
       await tapKey(tester, 'preferences-done');
 
-      expect(find.textContaining('This request will use Demo mode'), findsOneWidget);
+      expect(
+        find.textContaining('This request will use Demo mode'),
+        findsOneWidget,
+      );
       await tapKey(tester, 'submit');
 
       expect(api.sentRenderMode, 'illustrative_only');
