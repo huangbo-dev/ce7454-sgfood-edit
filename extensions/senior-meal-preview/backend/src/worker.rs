@@ -273,6 +273,51 @@ async fn resolve_verified_addr(endpoint: &WorkerEndpoint) -> Result<SocketAddr, 
     ))
 }
 
+/// Probe health independently of the generation queue. Fail closed on timeouts,
+/// legacy/dry-run workers, malformed replies, or unverified dependencies.
+pub async fn ready_dishes(config: &GpuWorkerConfig) -> Vec<String> {
+    async fn probe(config: &GpuWorkerConfig) -> Option<Vec<String>> {
+        let addr = resolve_verified_addr(&config.endpoint).await.ok()?;
+        let mut stream = TcpStream::connect(addr).await.ok()?;
+        let request = format!(
+            "GET {}/healthz HTTP/1.1\r\nHost: {}:{}\r\nConnection: close\r\n\r\n",
+            config.endpoint.path_prefix, config.endpoint.host, config.endpoint.port
+        );
+        stream.write_all(request.as_bytes()).await.ok()?;
+        let mut bytes = Vec::new();
+        stream.take(16_385).read_to_end(&mut bytes).await.ok()?;
+        if bytes.len() > 16_384 {
+            return None;
+        }
+        let end = bytes.windows(4).position(|w| w == b"\r\n\r\n")?;
+        let head = std::str::from_utf8(&bytes[..end]).ok()?;
+        if head.lines().next()?.split_whitespace().nth(1)? != "200" {
+            return None;
+        }
+        let health: serde_json::Value = serde_json::from_slice(&bytes[end + 4..]).ok()?;
+        if health["worker_mode"] != "gpu"
+            || health["gpu_ready"] != true
+            || health["editor_loaded"] != true
+            || health["checker_reachable"] != true
+        {
+            return None;
+        }
+        let dishes = health["ready_dishes"]
+            .as_array()?
+            .iter()
+            .filter_map(|d| d.as_str())
+            .filter(|d| matches!(*d, "chicken_rice" | "tofu_rice"))
+            .map(str::to_owned)
+            .collect();
+        Some(dishes)
+    }
+    tokio::time::timeout(Duration::from_secs(2), probe(config))
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default()
+}
+
 async fn send_worker_http(
     config: &GpuWorkerConfig,
     payload: &WorkerGenerateRequest,

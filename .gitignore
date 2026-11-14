@@ -54,6 +54,9 @@ envs/
 *.gif
 *.mp4
 *.mov
+!extensions/senior-meal-preview/mobile/assets/meals/chicken_rice.jpg
+!extensions/senior-meal-preview/mobile/assets/meals/fish_soup.jpg
+!extensions/senior-meal-preview/mobile/assets/meals/tofu_rice.jpg
 !assets/**
 !report/figures/**
 

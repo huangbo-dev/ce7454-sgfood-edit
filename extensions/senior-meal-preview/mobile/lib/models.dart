@@ -100,6 +100,7 @@ class CatalogCapabilities {
   const CatalogCapabilities({
     this.symbolicPreview = true,
     this.gpuPreview = false,
+    this.gpuReadyDishes,
   });
 
   /// Whether deterministic symbolic plate illustrations are available.
@@ -108,11 +109,21 @@ class CatalogCapabilities {
   /// Whether the private Tailscale GPU model worker is configured.
   final bool gpuPreview;
 
+  /// Dish fixtures advertised ready by the connected worker; null means an older server.
+  final List<String>? gpuReadyDishes;
+
+  bool supportsDish(String id) =>
+      gpuPreview && (gpuReadyDishes?.contains(id) ?? true);
+
   /// Decodes [CatalogCapabilities] from the optional `capabilities` JSON map.
   factory CatalogCapabilities.fromJson(Object? json) => switch (json) {
     null => const CatalogCapabilities(),
     {'symbolic_preview': true, 'gpu_preview': final bool gpu} =>
-      CatalogCapabilities(gpuPreview: gpu),
+      CatalogCapabilities(
+        gpuPreview: gpu,
+        gpuReadyDishes: (json['gpu_ready_dishes'] as List<dynamic>?)
+            ?.cast<String>(),
+      ),
     _ => throw const FormatException('Symbolic preview must remain enabled.'),
   };
 }

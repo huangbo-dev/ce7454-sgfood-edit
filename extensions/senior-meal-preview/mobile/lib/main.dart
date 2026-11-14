@@ -586,6 +586,7 @@ class _MealFlowState extends State<MealFlow> {
   /// The model path is validated for one studied edit on a rice meal only.
   /// The server enforces the same rule (`gpu_unsupported_selection`).
   bool get _aiPreviewSupported =>
+      _catalog!.capabilities.supportsDish(_dish?.id ?? '') &&
       (_dish?.id == 'chicken_rice' || _dish?.id == 'tofu_rice') &&
       _changes.length == 1 &&
       (_changes.contains('extra_vegetables') ||
@@ -604,8 +605,10 @@ class _MealFlowState extends State<MealFlow> {
       if (_preferences.texture != 'any') 'Soft texture',
       if (_preferences.flavour != 'any') 'Mild flavour',
     ];
-    if (_catalog!.capabilities.gpuPreview) {
-      values.add(_effectiveRenderMode == 'gpu_assisted' ? 'AI preview' : 'Demo');
+    if (_catalog!.capabilities.supportsDish(_dish?.id ?? '')) {
+      values.add(
+        _effectiveRenderMode == 'gpu_assisted' ? 'AI preview' : 'Demo',
+      );
     }
     return values.isEmpty ? 'Optional · No preference' : values.join(' · ');
   }
@@ -625,7 +628,8 @@ class _MealFlowState extends State<MealFlow> {
         builder: (context, refresh) {
           return FractionallySizedBox(
             heightFactor:
-                textScaleOf(context) > 1.3 || _catalog!.capabilities.gpuPreview
+                textScaleOf(context) > 1.3 ||
+                    _catalog!.capabilities.supportsDish(_dish?.id ?? '')
                 ? .9
                 : .78,
             child: SafeArea(
@@ -773,7 +777,7 @@ class _MealFlowState extends State<MealFlow> {
             ),
           ],
         ),
-        if (_catalog!.capabilities.gpuPreview) ...[
+        if (_catalog!.capabilities.supportsDish(_dish?.id ?? '')) ...[
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Divider(color: AppColors.divider, height: 1),

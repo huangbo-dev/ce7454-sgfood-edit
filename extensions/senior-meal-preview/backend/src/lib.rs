@@ -146,10 +146,11 @@ pub struct Selection {
 
 /// Server-advertised preview capabilities so clients know whether a Tailscale GPU worker
 /// is available behind this EC2 gateway.
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Capabilities {
     pub symbolic_preview: bool,
     pub gpu_preview: bool,
+    pub gpu_ready_dishes: Vec<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -170,9 +171,10 @@ pub fn catalog() -> &'static Catalog {
     &CATALOG
 }
 
-pub fn catalog_for(gpu_enabled: bool) -> Catalog {
+pub fn catalog_for(ready_dishes: Vec<String>) -> Catalog {
     let mut base = CATALOG.clone();
-    base.capabilities.gpu_preview = gpu_enabled;
+    base.capabilities.gpu_preview = !ready_dishes.is_empty();
+    base.capabilities.gpu_ready_dishes = ready_dishes;
     base
 }
 
@@ -196,7 +198,7 @@ fn build_catalog() -> Catalog {
             Dish {
                 id: "tofu_rice",
                 name: "Tofu rice",
-                description: "A plant-based rice meal",
+                description: "A rice meal with tofu and fish cake",
                 color: "#A7BA85",
             },
         ],
@@ -227,6 +229,7 @@ fn build_catalog() -> Catalog {
         capabilities: Capabilities {
             symbolic_preview: true,
             gpu_preview: false,
+            gpu_ready_dishes: Vec::new(),
         },
         notice: NOTICE,
     }
@@ -606,7 +609,10 @@ pub fn app_with_config(config: RuntimeConfig) -> Router {
         .route(
             "/api/v1/catalog",
             get(|State(cfg): State<Arc<RuntimeConfig>>| async move {
-                Json(catalog_for(cfg.gpu_worker.is_some()))
+                Json(catalog_for(match &cfg.gpu_worker {
+                    Some(worker) => worker::ready_dishes(worker).await,
+                    None => Vec::new(),
+                }))
             }),
         )
         .route("/api/v1/preview", post(preview))

@@ -194,6 +194,23 @@ def make_solid_png_data_url(rgb: tuple[int, int, int], width: int = 96, height: 
     return "data:image/png;base64," + base64.b64encode(png).decode("ascii")
 
 
+def fixture_is_usable(base: Path, dish: str) -> bool:
+    """Verify image and nonempty mask, not segmentation quality or provenance."""
+    try:
+        from PIL import Image
+        source, mask = builtin_fixture_paths(base, dish)
+        with Image.open(source) as image:
+            if image.size != (FIXTURE_SIDE, FIXTURE_SIDE):
+                return False
+            image.verify()
+        with Image.open(mask) as image:
+            if image.size != (FIXTURE_SIDE, FIXTURE_SIDE):
+                return False
+            return image.convert("L").getextrema()[1] > 127
+    except (OSError, ValueError, ImportError):
+        return False
+
+
 def pipeline_readiness() -> dict[str, object]:
     """Report loaded editor, checker connectivity, and available fixture pairs separately.
 
@@ -204,7 +221,7 @@ def pipeline_readiness() -> dict[str, object]:
         return {"gpu_ready": False, "reason": "external_command_unverified", "ready_dishes": []}
     fixture_dir = os.environ.get("WORKER_FIXTURE_DIR", "").strip()
     base = Path(fixture_dir) if fixture_dir else None
-    dishes = [dish for dish in BUILTIN_SOURCES if base and all(p.is_file() for p in builtin_fixture_paths(base, dish))]
+    dishes = [dish for dish in BUILTIN_SOURCES if base and fixture_is_usable(base, dish)]
     checker = False
     try:
         url = urllib.parse.urlparse(os.environ.get("WORKER_CHECKER_URL", "").strip() or DEFAULT_CHECKER_URL)

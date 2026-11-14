@@ -439,6 +439,18 @@ async fn gpu_assisted_mode_bridges_to_authenticated_worker_and_validates_artifac
     let addr = listener.local_addr().unwrap();
 
     let server_task = tokio::spawn(async move {
+        let (mut health_socket, _) = listener.accept().await.unwrap();
+        let mut health_buf = [0u8; 1024];
+        let n = health_socket.read(&mut health_buf).await.unwrap();
+        assert!(String::from_utf8_lossy(&health_buf[..n]).starts_with("GET /healthz"));
+        let health = r#"{"worker_mode":"gpu","gpu_ready":true,"editor_loaded":true,"checker_reachable":true,"ready_dishes":["chicken_rice"]}"#;
+        let reply = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            health.len(),
+            health
+        );
+        health_socket.write_all(reply.as_bytes()).await.unwrap();
+        drop(health_socket);
         let (mut socket, _) = listener.accept().await.unwrap();
         let mut buf = Vec::with_capacity(1024);
         let mut chunk = [0u8; 512];
@@ -488,7 +500,7 @@ async fn gpu_assisted_mode_bridges_to_authenticated_worker_and_validates_artifac
         ..RuntimeConfig::default()
     });
 
-    // Catalog reports gpu_preview = true when worker is configured.
+    // Catalog reports only dishes the worker says are ready.
     let catalog_resp = app
         .clone()
         .oneshot(
@@ -503,6 +515,10 @@ async fn gpu_assisted_mode_bridges_to_authenticated_worker_and_validates_artifac
     let catalog_bytes = catalog_resp.into_body().collect().await.unwrap().to_bytes();
     let catalog_val: Value = serde_json::from_slice(&catalog_bytes).unwrap();
     assert_eq!(catalog_val["capabilities"]["gpu_preview"], true);
+    assert_eq!(
+        catalog_val["capabilities"]["gpu_ready_dishes"],
+        json!(["chicken_rice"])
+    );
 
     // Only the studied single edits are forwarded to the model worker.
     let mut body = json!({"dish_id":"chicken_rice","change_ids":["brown_rice"]});
@@ -709,3 +725,59 @@ async fn worker_refusals_are_reported_truthfully_not_as_outages() {
     }
 }
 
+#[tokio::test]
+async fn catalog_fails_closed_for_unready_or_dry_run_workers() {
+    use senior_meal_preview::{RuntimeConfig, worker::GpuWorkerConfig};
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    for health in [
+        json!({"worker_mode":"dry-run", "gpu_ready":true, "editor_loaded":true, "checker_reachable":true, "ready_dishes":["chicken_rice"]}),
+        json!({"worker_mode":"gpu", "gpu_ready":true, "editor_loaded":true, "checker_reachable":false, "ready_dishes":["chicken_rice"]}),
+        json!({"worker_mode":"gpu", "gpu_ready":true}),
+    ] {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut b = [0u8; 1024];
+            socket.read(&mut b).await.unwrap();
+            let body = health.to_string();
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        });
+        let cfg = GpuWorkerConfig::new(
+            &format!("http://{}", address),
+            None,
+            std::time::Duration::from_secs(5),
+            1,
+        )
+        .unwrap();
+        let app = senior_meal_preview::app_with_config(RuntimeConfig {
+            gpu_worker: Some(cfg),
+            ..RuntimeConfig::default()
+        });
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/catalog")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let result: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(result["capabilities"]["gpu_preview"], false);
+        assert_eq!(result["capabilities"]["gpu_ready_dishes"], json!([]));
+        task.await.unwrap();
+    }
+}

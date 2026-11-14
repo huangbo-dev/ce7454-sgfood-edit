@@ -269,7 +269,7 @@ class MealArtwork extends StatelessWidget {
     filterQuality: FilterQuality.high,
     width: double.infinity,
     semanticLabel:
-        'Reference photo of ${dish.id == 'tofu_rice' ? 'tofu and vegetables' : dish.name}. Not a meal-preview result.',
+        'Reference photo of ${dish.id == 'tofu_rice' ? 'tofu, fish cake and rice' : dish.name}. Not a meal-preview result.',
     errorBuilder: (context, error, stackTrace) => ColoredBox(
       color: AppColors.surfaceSubtle,
       child: Center(
@@ -302,7 +302,7 @@ class MealCard extends StatelessWidget {
   String get subtitle => switch (dish.id) {
     'chicken_rice' => 'Chicken, rice & cucumber',
     'fish_soup' => 'Fish, greens & broth',
-    'tofu_rice' => 'Tofu & vegetables pictured',
+    'tofu_rice' => 'Tofu, fish cake & vegetables',
     _ => 'Reference photo',
   };
 

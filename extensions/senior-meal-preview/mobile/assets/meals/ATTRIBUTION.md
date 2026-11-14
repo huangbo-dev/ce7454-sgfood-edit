@@ -20,12 +20,8 @@ These public reference photographs illustrate sample catalog entries only. They 
 - Thumbnail: https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Sliced_fish_soup%2C_Pek_Kio_Market_%26_Food_Centre_%2825065937730%29.jpg/960px-Sliced_fish_soup%2C_Pek_Kio_Market_%26_Food_Centre_%2825065937730%29.jpg
 
 ## tofu_rice.jpg
-- Title: Stir Fried Tofu.jpg
-- Author: PaulMondal
-- Source: https://commons.wikimedia.org/wiki/File:Stir_Fried_Tofu.jpg
-- License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
-- License URL: https://creativecommons.org/licenses/by-sa/4.0/
-- Thumbnail: https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Stir_Fried_Tofu.jpg/960px-Stir_Fried_Tofu.jpg
-- Depicts stir-fried tofu and vegetables only; no rice is visible. Label as a sample tofu reference, not a complete photographed rice meal or a before/after result.
-- Replaced the prior brown-rice photograph after visual verification. No local cropping, retouching, or other image manipulation was performed.
-- Preserve attribution and license notices when distributing. Adaptations of this photograph must use the same or a compatible license.
+- Title: Teochew rice with vegetables, fish cake and tofu
+- Author: Walter Lim
+- Source: https://commons.wikimedia.org/wiki/File:Teochew_rice_with_vegetables,_fish_cake_and_tofu_-healthy_-lunch_(8351561669).jpg
+- License: Creative Commons Attribution 2.0 Generic, https://creativecommons.org/licenses/by/2.0/
+- The sample contains fish cake as well as tofu and vegetables; it is not vegetarian. The app image is unmodified. The separate development fixture is upscaled and has a manually drawn rice mask.
