@@ -352,7 +352,11 @@ class BuiltinSgeditAdapterTests(unittest.TestCase):
 
         from PIL import Image
 
+        check = _chk()
+        check["model"] = "/private/models--Qwen--Qwen2.5-VL-7B-Instruct/snapshots/abc (4-bit)"
+        self.script[:] = [check]
         art = self.run_edit()
+        self.assertEqual(art["model"], "brushnet-sdxl+Qwen2.5-VL-7B-Instruct (4-bit)")
         # Exactly the fields of the Rust GpuArtifact (serde deny_unknown_fields).
         self.assertEqual(
             set(art),
