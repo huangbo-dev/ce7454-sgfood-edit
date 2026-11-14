@@ -393,7 +393,10 @@ def run_builtin_pipeline(dish_id: str, change_ids: list[str]) -> dict[str, objec
             )
             policy_version = loop.POLICY["version"]
             prompt_id = f"sgedit-{policy_version}:{PROMPT_SET}:{task}/{source}:ladder{rung}:g{sel_spec.guidance:g}"
-            checker_model = str(selected["check"].get("model", "qwen2.5-vl checker"))
+            checker_identity = str(selected["check"].get("model", ""))
+            checker_model = "Qwen2.5-VL-7B-Instruct" if "Qwen2.5-VL-7B-Instruct" in checker_identity else "Qwen checker"
+            if "4-bit" in checker_identity:
+                checker_model += " (4-bit)"
 
             if run_root:
                 record = {
