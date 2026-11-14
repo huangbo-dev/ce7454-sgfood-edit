@@ -1,0 +1,9 @@
+# Fixture and readiness test handover
+
+The catalog probes the worker health endpoint and reports only ready dish IDs. The probe checks a loaded editor, checker TCP connectivity, and correctly sized, nonempty source and mask files. A TCP connection is not a successful checker inference and file checks do not validate the segmentation. Availability is a snapshot taken when the catalog is fetched.
+
+The tofu development fixture is a 1024 × 1024 upscale of Walter Lim's CC BY 2.0 Teochew rice photograph; source, license, and transformation details are recorded with the fixture. It includes fish cake. The hand-drawn conservative mask covers only part of the rice and requires visual review before any quality claim. Do not use this exploratory fixture as evidence for the locked research benchmark.
+
+On Spark 02, the isolated test fixture is under `~/senior-meal-spark-runtime/work/codex-fixture-test/tofu_rice`; its source and mask have not been installed into the running service. The isolated test checkout is `~/ce7454-integrated-test`, and its run records and worker log are under `~/senior-meal-spark-runtime/work/codex-tofu-run`. A browser request for tofu brown rice was submitted to the isolated stack but its outcome was not observed before the SSH session disconnected. Check `worker.log` and the generated `run.json` before claiming a successful generation; inspect the output and mask together. The test-only API and worker were started on loopback ports 8789 and 8795. Stop these test processes after confirming their identities, without stopping the existing production services.
+
+Verified locally: the reference images display, an unreachable worker yields an empty ready-dish list and hides AI preview in the UI, 22 Rust tests and 44 Flutter tests pass. On Spark, 18 worker tests passed and the live catalog reported the two fixture IDs before the browser request. Changes are on `fix/fixture-readiness` and have not been deployed to the running app.
