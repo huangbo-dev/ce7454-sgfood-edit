@@ -58,7 +58,7 @@ class HttpMealApi implements MealApi {
     ),
     String authToken = const String.fromEnvironment('API_AUTH_TOKEN'),
     http.Client? client,
-    this.timeout = const Duration(seconds: 28),
+    this.timeout = const Duration(seconds: 180),
   }) : _baseUrl = resolveApiBaseUrl(baseUrl, Uri.base),
        _authToken = authToken.trim(),
        _client = client ?? http.Client();
