@@ -294,6 +294,8 @@ def run_gpu_pipeline(
             "generated_label": str(result.get("generated_label", GENERATED_DISCLOSURE)),
         }
 
+    if texture != "any" or flavour != "any":
+        raise GpuRequestUnsupportedError("Texture and flavour preferences are not supported by the validated model.")
     return run_builtin_pipeline(dish_id, change_ids)
 
 

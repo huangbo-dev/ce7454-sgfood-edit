@@ -10,11 +10,9 @@ Source inspection of `gpu-worker/gpu_worker.py` against this checkout's `sgedit/
 
 Texture/flavour values are passed into the worker interface but not used by the built-in editing loop. Sauce-on-side is not one of the two tasks in the research evaluation rubric. Multiple edits are sequential and need final-image preservation checks; passing each step alone would not establish that earlier changes survived. Worker configuration being present is not proof of model readiness.
 
-## Adapter status (2026-11-10, later the same day)
+## Adapter status (integrated Spark version)
 
-The incompatible built-in path was replaced by `gpu-worker/sgedit_adapter.py`, which calls the research `sgedit.loop` (`Runner.candidate`, `base_spec`, `next_spec`, `POLICY`) unchanged and repeats only its check-and-retry arm. The model path now accepts one studied edit (`extra_vegetables` → T1-B, `brown_rice` → T2) on `chicken_rice` or `tofu_rice` with no texture/flavour preference; the worker answers anything else with HTTP 422, the Rust API with `gpu_unsupported_selection`, and the app sends such requests in Demo mode with a visible reason.
-
-Verified: `gpu-worker/test_sgedit_adapter.py` runs the adapter against the real `sgedit/loop.py` with a fake editor and checker (no GPU). **Not verified:** real BrushNet/Qwen inference, the fixtures (which photos and rice masks to use is undecided), and the Rust and Flutter changes, which were written without a toolchain and still need `scripts/check.sh`. The GPU acceptance gate is `gpu_worker.py --mode gpu --warm` on the GPU machine with the checker running. Steps 3–7 below are unchanged and still open.
+The worker uses the research loop for one studied edit on a supported rice fixture and rejects unsupported texture and flavour preferences. The worker test suite exercises the loop with a fake editor and checker; real-model acceptance is a separate test. Health reports available fixture pairs, loaded editor, and TCP connectivity to the checker. A TCP connection does not guarantee successful scoring.
 
 ## Concrete implementation sequence
 
@@ -26,8 +24,6 @@ Verified: `gpu-worker/test_sgedit_adapter.py` runs the adapter against the real 
 6. Reuse the research rubric for independent annotation: requested edit 0–2, preservation 0–2, realism 1–5, unrequested additions yes/no; pairwise preference asks which better fulfils the edit while preserving the meal. Evaluate fixed methods on the same locked examples, blind identities/order and report failure cases and retry cost. Reviewer familiarity/usability questions are secondary and must not replace these method outcomes.
 7. Only after a real model test, truthful provenance display, final-image checks and outage tests should hosting advertise the GPU capability as ready. Keep public health claims and any participant research behind their separate evidence/approval requirements.
 
-## Adapter repair (2026-11-10, later the same day)
+## Runtime limits
 
-The interface mismatch above is fixed in `gpu-worker/gpu_worker.py`: the built-in path now runs the retry arm through `sgedit.loop.Runner.candidate`, `base_spec`, `next_spec`, `CheckerClient.check` and `sgedit.editor.Editor.edit`, selects by checker score as `Runner.run` does, restricts requests to one of the two research tasks (step 1 and 5), and reports the real policy version, ladder step, seed and attempt count. `gpu-worker/test_gpu_worker.py` exercises this against the real `sgedit.loop` code with a fake editor and a fake checker service (step 2's model-free contract test). Setting `WORKER_RUN_DIR` keeps per-attempt outputs with input/mask hashes. The run record also names the checkpoint paths, and `WORKER_TIME_BUDGET_SECS` (20 s default) stops retries before the gateway (25 s) and app (28 s) timeouts, returning the best candidate so far; using the full attempt budget needs all three raised together. Still open: the real GPU acceptance run (no weights or fixtures were available where this was written), steps 3–4 (the gateway's `GpuArtifact` schema is unchanged, so structured evidence is not yet in the API response) and steps 6–7. Texture/flavour are still ignored by the model path.
-
-This document is a proposal grounded in current source, not an implementation or a new experimental result. No model, masks, private images, or study responses were changed or published in preparing it.
+The worker defaults to a 110-second retry planning budget, the gateway to 150 seconds, and the client to 180 seconds. The worker decides whether to start another attempt based on previous attempt durations; it cannot interrupt an unusually slow attempt. Warm the editor before accepting requests and adjust all limits together for the deployment. The selector's verdict is not independent evidence of image quality.
