@@ -653,6 +653,11 @@ async fn worker_refusals_are_reported_truthfully_not_as_outages() {
 
     for (worker_status, api_status, code) in [
         (
+            "429 Too Many Requests",
+            StatusCode::SERVICE_UNAVAILABLE,
+            "gpu_busy",
+        ),
+        (
             "422 Unprocessable Entity",
             StatusCode::UNPROCESSABLE_ENTITY,
             "gpu_unsupported_request",

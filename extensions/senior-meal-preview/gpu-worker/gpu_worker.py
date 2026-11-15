@@ -86,6 +86,7 @@ class GpuRequestUnsupportedError(RuntimeError):
     """Raised when the built-in sgedit path has no validated task for the request."""
 
 
+_REQUEST_LOCK = threading.Lock()  # fail fast instead of queuing requests beyond client timeouts
 _GPU_LOCK = threading.Lock()  # one generation at a time on the single editor
 _EDITOR = None
 
@@ -549,16 +550,23 @@ class WorkerHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "invalid_json"})
             return
 
+        if not isinstance(data, dict):
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid_selection"})
+            return
+
         dish_id = data.get("dish_id")
         change_ids = data.get("change_ids")
         texture = data.get("texture", "any")
         flavour = data.get("flavour", "any")
         if (
-            dish_id not in ALLOWED_DISHES
+            not isinstance(dish_id, str)
+            or dish_id not in ALLOWED_DISHES
             or not isinstance(change_ids, list)
             or not (1 <= len(change_ids) <= 2)
-            or any(cid not in ALLOWED_CHANGES for cid in change_ids)
+            or any(not isinstance(cid, str) or cid not in ALLOWED_CHANGES for cid in change_ids)
+            or not isinstance(texture, str)
             or texture not in ALLOWED_TEXTURES
+            or not isinstance(flavour, str)
             or flavour not in ALLOWED_FLAVOURS
         ):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid_selection"})
@@ -575,6 +583,13 @@ class WorkerHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, artifact)
             return
 
+        if not _REQUEST_LOCK.acquire(blocking=False):
+            self._send_json(HTTPStatus.TOO_MANY_REQUESTS, {
+                "error": "gpu_busy",
+                "message": "A preview is already running. Please wait for it to finish before trying again.",
+            })
+            return
+        request_started = time.monotonic()
         try:
             artifact = run_gpu_pipeline(
                 dish_id=dish_id,
@@ -596,6 +611,10 @@ class WorkerHandler(BaseHTTPRequestHandler):
                 {"error": "gpu_pipeline_unready", "message": str(exc)},
             )
             return
+
+        finally:
+            _REQUEST_LOCK.release()
+            sys.stderr.write(f"[gpu-worker] generation_request_seconds={time.monotonic() - request_started:.2f}\n")
 
         self._send_json(HTTPStatus.OK, artifact)
 

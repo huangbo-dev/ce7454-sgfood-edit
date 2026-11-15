@@ -18,6 +18,49 @@ import gpu_worker
 
 
 class TailscaleGpuWorkerTests(unittest.TestCase):
+    def test_busy_rejection_and_release_after_failure(self) -> None:
+        server, base = self._start_server(mode="gpu", token=None)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        body = json.dumps({"dish_id": "chicken_rice", "change_ids": ["brown_rice"]}).encode()
+
+        def post():
+            req = urllib.request.Request(base + "/v1/generate", data=body)
+            try:
+                with urllib.request.urlopen(req, timeout=3) as resp:
+                    return resp.status, json.load(resp)
+            except urllib.error.HTTPError as exc:
+                with exc:
+                    return exc.code, json.load(exc)
+
+        with gpu_worker._REQUEST_LOCK, mock.patch.object(gpu_worker, "run_gpu_pipeline") as run:
+            status, payload = post()
+            self.assertEqual((status, payload["error"]), (429, "gpu_busy"))
+            run.assert_not_called()
+        with mock.patch.object(gpu_worker, "run_gpu_pipeline", side_effect=gpu_worker.GpuPipelineUnreadyError("unready")):
+            self.assertEqual(post()[0], 503)
+        self.assertFalse(gpu_worker._REQUEST_LOCK.locked())
+        with mock.patch.object(gpu_worker, "run_gpu_pipeline", return_value={"test_fixture": True}):
+            self.assertEqual(post(), (200, {"test_fixture": True}))
+        self.assertFalse(gpu_worker._REQUEST_LOCK.locked())
+
+    def test_malformed_selection_types_return_json_errors(self) -> None:
+        server, base = self._start_server(mode="gpu", token=None)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        valid = {"dish_id": "chicken_rice", "change_ids": ["brown_rice"]}
+        bodies = [None, [], "bad", {**valid, "dish_id": []},
+                  {**valid, "change_ids": [{}]}, {**valid, "texture": []},
+                  {**valid, "flavour": {}}]
+        for body in bodies:
+            with self.subTest(body=body):
+                req = urllib.request.Request(base + "/v1/generate", data=json.dumps(body).encode())
+                with self.assertRaises(urllib.error.HTTPError) as ctx:
+                    urllib.request.urlopen(req, timeout=3)
+                with ctx.exception as exc:
+                    self.assertEqual(exc.code, 400)
+                    self.assertEqual(json.load(exc)["error"], "invalid_selection")
+
     def test_allowed_bind_ip_enforces_tailscale_or_loopback(self) -> None:
         for allowed in (
             "127.0.0.1",

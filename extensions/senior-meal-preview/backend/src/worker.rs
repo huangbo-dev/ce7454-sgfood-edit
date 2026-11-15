@@ -389,6 +389,7 @@ async fn send_worker_http(
     match status_code {
         200..300 => {}
         422 => return Err(WorkerFailure::Unsupported),
+        429 => return Err(WorkerFailure::Busy),
         503 => return Err(WorkerFailure::NotReady),
         _ => {
             return Err(WorkerFailure::Unreachable(format!(
