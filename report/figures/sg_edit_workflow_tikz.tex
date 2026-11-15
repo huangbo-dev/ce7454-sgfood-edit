@@ -1,0 +1,81 @@
+% SG-Edit three-stage framework. Requires tikz, graphicx, arrows.meta.
+\begin{figure*}[t]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily,
+  >=Stealth,
+  arrow/.style={-{Stealth[length=2mm]},draw=black!55,line width=.65pt},
+  feedback/.style={-{Stealth[length=2mm]},draw=teal!65!black,line width=.7pt,dashed},
+  module/.style={draw=black!25,rounded corners=1.5mm,line width=.55pt,
+                 inner sep=5pt,align=left,text width=3.75cm,
+                 minimum width=4.15cm,minimum height=1.55cm,
+                 font=\sffamily\scriptsize,text=black!85},
+  stage/.style={font=\sffamily\bfseries\small,text=black!80},
+  note/.style={font=\sffamily\scriptsize,text=black!60,fill=white,inner sep=1pt}
+]
+% Stage 1: input and frozen target. The mask is prepared before the editing loop.
+\node[stage,anchor=west] at (0,7.00) {STAGE 1 \quad Define the meal edit};
+\node[module,fill=purple!8] (photo) at (2.10,5.95)
+ {\textbf{Meal photograph}\par\vspace{3pt}
+  Original hawker meal; retain the surrounding food and scene.};
+\node[module,fill=purple!8] (task) at (6.65,5.95)
+ {\textbf{Requested alternative}\par\vspace{3pt}
+  Task 1: add broccoli, keep staple.\par
+  Task 2: replace white with brown rice.};
+\node[module,fill=teal!8] (segment) at (11.20,5.95)
+ {\textbf{Ingredient localization}\par\vspace{3pt}
+  SAM3 identifies the target staple region.};
+\node[module,fill=teal!8] (freeze) at (15.75,5.95)
+ {\textbf{Fixed edit mask}\par\vspace{3pt}
+  Pre-existing binary mask $m$ is reused for every candidate and retry.};
+\draw[arrow] (photo.east)--(task.west);
+\draw[arrow] (task.east)--(segment.west);
+\draw[arrow] (segment.east)--(freeze.west);
+
+% Stage 2: editor, candidate, checker and explicit stopping/selection policy.
+\node[stage,anchor=west] at (0,4.65) {STAGE 2 \quad Generate and refine the preview};
+\node[module,fill=blue!7] (editor) at (2.10,3.48)
+ {\textbf{Localized editor}\par\vspace{3pt}
+  Crop around $m$; BrushNet-SDXL; feathered paste-back.};
+\node[module,fill=blue!7] (candidate) at (6.65,3.48)
+ {\textbf{Candidate image $y_i$}\par\vspace{3pt}
+  One edited preview at the current prompt, seed and guidance.};
+\node[module,fill=orange!10] (checker) at (11.20,3.48)
+ {\textbf{VLM checker}\par\vspace{3pt}
+  Edit completion, preservation, realism, visible paste artifacts.};
+\node[module,fill=orange!10] (policy) at (15.75,3.48)
+ {\textbf{Stop or retry}\par\vspace{3pt}
+  Pass or $K$ reached: return highest $S$.\par
+  Otherwise: classify failure and retry.};
+\draw[arrow] (editor.east)--(candidate.west);
+\draw[arrow] (candidate.east)--(checker.west);
+\draw[arrow] (checker.east)--(policy.west);
+\draw[arrow] (freeze.south)--++(0,-.23)-|(editor.north);
+% Feedback is below the processing row and above the evaluation row.
+\draw[feedback] (policy.south)--(15.75,2.26)--(2.10,2.26)--(editor.south);
+\node[note] at (8.9,2.26)
+ {edit incomplete: next prompt, then higher guidance; other failure: new seed, reset guidance};
+
+% Stage 3: comparisons and interpretation of the generated previews.
+\node[stage,anchor=west] at (0,1.85) {STAGE 3 \quad Evaluate the selected previews};
+\node[module,fill=yellow!11] (data) at (2.10,.72)
+ {\textbf{Evaluation cases}\par\vspace{3pt}
+  20 photographs; 34 tasks: 20 Task 1 and 14 Task 2.};
+\node[module,fill=yellow!11] (arms) at (6.65,.72)
+ {\textbf{Policy comparisons}\par\vspace{3pt}
+  Single-shot, best-of-four, fixed-prompt stopping, adaptive retry.};
+\node[module,fill=yellow!11] (measure) at (11.20,.72)
+ {\textbf{Observed outcomes}\par\vspace{3pt}
+  Checker passes by task; generation count; prompt-condition effects.};
+\node[module,fill=yellow!11] (limit) at (15.75,.72)
+ {\textbf{Evidence boundary}\par\vspace{3pt}
+  Checker-selected outputs need independent visual assessment.};
+\draw[arrow] (data.east)--(arms.west);
+\draw[arrow] (arms.east)--(measure.west);
+\draw[arrow] (measure.east)--(limit.west);
+\end{tikzpicture}%
+}
+\caption{SG-Edit framework. Stage 1 defines the two meal-alternative tasks and supplies a pre-existing SAM3 mask for the target staple. Stage 2 generates localized edits, checks each candidate, and retries detected failures while the budget remains. The stopping policy returns the highest-scoring attempted image. Stage 3 compares the resulting policies using checker verdicts and generation counts; these diagnostics do not constitute independent visual-quality evidence.}
+\label{fig:workflow}
+\end{figure*}

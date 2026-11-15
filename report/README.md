@@ -1,3 +1,11 @@
+# Report source (final, 15 November 2026)
+
+`main.tex` is the live Overleaf source exported 15 Nov 2026 21:37 SGT, with six wording cuts made so it compiles to **four pages including references** (Tectonic 0.17; no undefined references). No number or finding was changed. All Table 1 counts match `../evidence/fixed-ladder-20261111/SUMMARY.json`.
+
+Omitted from Git: `figures/qualitative_examples_revised.pdf` (source-photo panels) and the author e-mail line (kept in the private Overleaf copy). A local build without the figure will fail at `\includegraphics`; use the Overleaf project or the private copy in `~/ce7454-final-submission/` for the submission PDF.
+
+Earlier history follows.
+
 # Report source snapshot
 
 Source: reviewed Overleaf export downloaded 10 November 2026 at 09:02 SGT, after the four-page E3/E4 review. Source archive hash is in `../evidence/supplemental-20261110/SOURCE_RECEIPTS.json`.
