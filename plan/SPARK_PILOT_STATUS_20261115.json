@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-15",
+  "project": "CE7454 Project 2 SGFood Edit",
+  "code_commit": "c03cf4432fc14ca520e1cb320844ea15246bc383",
+  "host": "angel-zqs-spark02",
+  "checkout": "/home/lily/ce7454-work/context-pilot-code-20261115",
+  "inputs": "/home/lily/ce7454-work/context-pilot-inputs-20261115",
+  "run": "/home/lily/ce7454-work/runs/context-pilot-20261115",
+  "control": "/home/lily/ce7454-work/context-pilot-control-20261115",
+  "supervisor_pid": 4002476,
+  "preflight": "passed",
+  "last_verified_outputs": 48,
+  "expected_outputs": 48,
+  "source_photos": 9,
+  "task_cases": 12,
+  "visual_review": "pending",
+  "live_service_restart": false,
+  "frozen_data_modified": false,
+  "report_sync": "Not updated in this continuation; coursework/report/main.tex is an older snapshot and must not replace live Overleaf.",
+  "next": [
+    "Blind-review naturalness; do not equate pixel preservation with realism.",
+    "Locate four differing fixed-ladder/adaptive cases; not found in checked Spark directories.",
+    "Run research-adapter tests on Spark and schedule deployment of the reconciled standalone app patch; live service remains unchanged.",
+    "Use verified findings only in report and five-minute presentation."
+  ],
+  "exit_code": 0,
+  "finish_utc": "2026-11-15T02:01:40Z",
+  "verification": "48 unique expected outputs and SHA256 checks passed",
+  "results_sha256": "6233c5f02b72736e347cc168896495992fcdfc01a9889e41daec96c898ab5c90",
+  "analysis": "/home/lily/ce7454-work/runs/context-pilot-20261115-analysis/summary.json",
+  "review_pairs": 24,
+  "identical_crop_pairs": 2,
+  "byte_identical_output_pairs": 0,
+  "live_health_after_run": {
+    "status": "ok",
+    "worker_mode": "gpu",
+    "gpu_ready": false,
+    "photo_ready": true
+  },
+  "app_backup": {
+    "repository": "huangbo-dev/senior-meal-preview",
+    "branch": "sync/spark-photo-worker-20261115",
+    "commit": "d818a1e755ec657602f43f5cace722a2035f2c01",
+    "remote_verified": true
+  },
+  "app_reliability_patch": {
+    "repository": "huangbo-dev/senior-meal-preview",
+    "branch": "fix/spark-photo-request-admission",
+    "commit": "c5affb5",
+    "deployed": false,
+    "rust_api_tests_passed": 27,
+    "python_tests_passed": 16,
+    "research_adapter_tests_skipped": 21
+  }
+}
